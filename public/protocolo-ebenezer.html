@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-title" content="Protocolo Ebenezer">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Protocolo Ebenezer - Sistema de Registro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --cream: #F7E6CA;
+            --beige: #F4E4D9;
+            --sage: #5D6658;
+            --antique: #FAEBD7;
+            --lavender: #E6E6FA;
+            --text-dark: #3D4439;
+            --green-avail: #4a7c59;
+            --yellow-mid: #c8952a;
+            --red-full: #a84040;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--beige) 50%, var(--antique) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        /* ======== LOGIN ======== */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            background: rgba(255,255,255,0.95);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(93,102,88,0.15);
+            border: 2px solid var(--beige);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .login-box::before {
+            content: '✝';
+            position: absolute; top: 20px; right: 20px;
+            font-size: 4rem; color: var(--sage); opacity: 0.1;
+            font-family: 'Playfair Display', serif;
+        }
+        .login-box h1 { font-family: 'Playfair Display', serif; color: var(--sage); font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .login-box .subtitle { font-style: italic; color: var(--text-dark); margin-bottom: 2rem; font-size: 1.1rem; }
+        .input-group { margin-bottom: 1.5rem; text-align: left; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--sage); font-weight: 600; font-size: 0.95rem; }
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%; padding: 12px 16px;
+            border: 2px solid var(--beige); border-radius: 8px;
+            font-family: 'Cormorant Garamond', serif; font-size: 1.05rem;
+            background: var(--antique); transition: all 0.3s ease;
+        }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+            outline: none; border-color: var(--sage); background: white;
+            box-shadow: 0 0 0 3px rgba(93,102,88,0.1);
+        }
+        .input-group textarea { resize: vertical; min-height: 70px; }
+        .btn-vintage {
+            background: var(--sage); color: white; border: none;
+            padding: 14px 32px;
+            font-family: 'Playfair Display', serif; font-size: 1.1rem;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(93,102,88,0.2);
+            width: 100%; margin-top: 1rem;
+        }
+        .btn-vintage:hover { background: var(--text-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(93,102,88,0.3); }
+
+        /* ======== MAIN APP ======== */
+        .main-app { display: none; padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+        .header {
+            background: linear-gradient(135deg, var(--sage) 0%, var(--text-dark) 100%);
+            color: var(--cream); padding: 1.5rem 2rem;
+            border-radius: 15px; margin-bottom: 1.5rem;
+            box-shadow: 0 8px 30px rgba(93,102,88,0.2);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1rem;
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 0.25rem; }
+        .header .verse { font-style: italic; opacity: 0.9; font-size: 1rem; }
+        .header-right { display: flex; align-items: center; gap: 2rem; }
+        .clock { text-align: right; font-size: 1.3rem; font-weight: 600; }
+        .logout-btn {
+            background: rgba(255,255,255,0.15); color: var(--cream);
+            border: 2px solid var(--cream); padding: 10px 20px;
+            border-radius: 8px; cursor: pointer;
+            font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 1rem;
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .logout-btn:hover { background: var(--cream); color: var(--sage); transform: translateY(-2px); }
+        .logo { height: 60px; width: auto; border-radius: 8px; }
+
+        /* ======== MODULE NAV ======== */
+        .module-nav {
+            display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .module-tab {
+            padding: 10px 22px;
+            border: 2px solid var(--beige);
+            background: white; border-radius: 10px;
+            cursor: pointer; font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem; font-weight: 600; color: var(--text-dark);
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .module-tab:hover { border-color: var(--sage); color: var(--sage); }
+        .module-tab.active { background: var(--sage); color: white; border-color: var(--sage); }
+
+        /* ======== STATS ======== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.25rem; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white; padding: 1.5rem;
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(93,102,88,0.08);
+            border: 2px solid var(--beige); text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(93,102,88,0.15); }
+        .stat-card .icon { font-size: 2.2rem; color: var(--sage); margin-bottom: 0.5rem; }
+        .stat-card .number { font-size: 2.3rem; font-weight: 700; color: var(--sage); font-family: 'Playfair Display', serif; }
+        .stat-card .label { color: var(--text-dark); font-size: 0.95rem; margin-top: 0.25rem; }
+
+        /* ======== CONTENT GRID ======== */
+        .content-grid { display: grid; grid-template-columns: 1fr 400px; gap: 2rem; }
+        .registration-section {
+            background: white; padding: 2.5rem;
+            border-radius: 15px; box-shadow: 0 6px 20px rgba(93,102,88,0.1);
+            border: 2px solid var(--beige);
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif; color: var(--sage);
+            font-size: 1.8rem; margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem; border-bottom: 2px solid var(--beige);
+        }
+        .dni-input-container { margin: 2rem 0; }
+        .dni-input {
+            width: 100%; padding: 18px; font-size: 1.5rem;
+            border: 3px solid var(--beige); border-radius: 10px;
+            text-align: center; font-family: 'Cormorant Garamond', serif;
+            background: var(--antique); transition: all 0.3s ease; letter-spacing: 2px;
+        }
+        .dni-input:focus { outline: none; border-color: var(--sage); background: white; box-shadow: 0 0 0 5px rgba(93,102,88,0.1); }
+        .team-badge {
+            display: inline-block; padding: 8px 20px; border-radius: 20px;
+            font-weight: 600; font-size: 0.95rem; margin: 0.25rem;
+        }
+        .team-a { background: var(--sage); color: white; }
+        .team-b { background: #8B9D83; color: white; }
+        .team-c { background: #A8B5A0; color: var(--text-dark); }
+        .team-d { background: #C5D0BE; color: var(--text-dark); }
+        .team-liderazgo, .team-diacono, .team-anciano {
+            background: linear-gradient(135deg, var(--lavender), var(--beige));
+            color: var(--text-dark); border: 2px solid var(--sage);
+        }
+        .history-section {
+            background: white; padding: 2rem; border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(93,102,88,0.1); border: 2px solid var(--beige);
+            max-height: 80vh; overflow-y: auto;
+        }
+        .attendance-item {
+            padding: 1rem; margin-bottom: 0.75rem;
+            background: var(--antique); border-radius: 8px;
+            border-left: 4px solid var(--sage); transition: all 0.3s ease;
+        }
+        .attendance-item:hover { background: var(--lavender); transform: translateX(-5px); }
+        .attendance-item .name { font-weight: 600; font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.25rem; }
+        .attendance-item .meta { font-size: 0.9rem; color: var(--sage); }
+        .btn-export {
+            background: var(--beige); color: var(--text-dark); border: none;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer;
+            font-family: 'Cormorant Garamond', serif; font-weight: 600;
+            margin-top: 1rem; transition: all 0.3s ease; font-size: 1rem;
+        }
+        .btn-export:hover { background: var(--sage); color: white; }
+
+        /* ======== MODAL ======== */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(93,102,88,0.5); z-index: 1000;
+            justify-content: center; align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content {
+            background: white; padding: 3rem; border-radius: 20px;
+            max-width: 500px; width: 90%; text-align: center;
+            box-shadow: 0 20px 60px rgba(93,102,88,0.3); border: 3px solid var(--beige);
+            animation: slideUp 0.3s ease;
+        }
+        .modal-content.modal-lg { max-width: 720px; text-align: left; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-content h2 { font-family: 'Playfair Display', serif; color: var(--sage); font-size: 2rem; margin-bottom: 1rem; }
+        .success-icon { font-size: 5rem; color: var(--sage); margin-bottom: 1rem; }
+
+        /* ======== LOGISTICS MODULE ======== */
+        #logisticsModule { display: none; }
+
+        .logistics-section {
+            background: white; padding: 2rem;
+            border-radius: 15px; box-shadow: 0 6px 20px rgba(93,102,88,0.1);
+            border: 2px solid var(--beige); margin-bottom: 2rem;
+        }
+
+        /* Sub-tabs */
+        .sub-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .sub-tab {
+            padding: 8px 18px; border: 2px solid var(--beige);
+            background: var(--antique); border-radius: 8px;
+            cursor: pointer; font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem; font-weight: 600; color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+        .sub-tab:hover { border-color: var(--sage); }
+        .sub-tab.active { background: var(--sage); color: white; border-color: var(--sage); }
+
+        /* Search & filter bar */
+        .search-filter-bar {
+            display: flex; gap: 1rem; margin-bottom: 1.5rem;
+            flex-wrap: wrap; align-items: center;
+        }
+        .search-input {
+            flex: 1; min-width: 200px;
+            padding: 10px 16px; border: 2px solid var(--beige);
+            border-radius: 8px; font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem; background: var(--antique); transition: all 0.3s ease;
+        }
+        .search-input:focus { outline: none; border-color: var(--sage); background: white; }
+        .filter-btn {
+            padding: 10px 16px; border: 2px solid var(--beige);
+            background: white; border-radius: 8px;
+            cursor: pointer; font-family: 'Cormorant Garamond', serif;
+            font-size: 0.95rem; font-weight: 600; color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+        .filter-btn:hover, .filter-btn.active { background: var(--sage); color: white; border-color: var(--sage); }
+
+        /* Cards */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .church-card, .host-card, .driver-card {
+            background: var(--antique); border-radius: 12px;
+            border: 2px solid var(--beige); overflow: hidden;
+            transition: all 0.3s ease; box-shadow: 0 3px 12px rgba(93,102,88,0.08);
+        }
+        .church-card:hover, .host-card:hover, .driver-card:hover {
+            box-shadow: 0 8px 25px rgba(93,102,88,0.18); transform: translateY(-3px);
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--sage), var(--text-dark));
+            color: var(--cream); padding: 1rem 1.25rem;
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .card-header h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 0.2rem; }
+        .card-header .card-meta { font-size: 0.88rem; opacity: 0.85; }
+        .card-actions { display: flex; gap: 0.4rem; }
+        .card-btn {
+            background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px;
+            border-radius: 6px; cursor: pointer;
+            font-size: 0.85rem; transition: all 0.2s ease;
+        }
+        .card-btn:hover { background: rgba(255,255,255,0.3); }
+        .card-btn.danger:hover { background: rgba(180,50,50,0.5); }
+        .card-body { padding: 1.25rem; }
+        .card-row {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .card-row .key { color: var(--sage); font-weight: 600; }
+        .card-row .val { color: var(--text-dark); text-align: right; max-width: 60%; }
+
+        /* Expandable congregants */
+        .toggle-congregants {
+            width: 100%; padding: 8px; background: none;
+            border: none; border-top: 1px dashed var(--beige);
+            cursor: pointer; color: var(--sage); font-family: 'Cormorant Garamond', serif;
+            font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .toggle-congregants:hover { background: var(--beige); }
+        .congregants-list { display: none; padding: 1rem; border-top: 1px solid var(--beige); }
+        .congregants-list.open { display: block; }
+        .congregant-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 8px; margin-bottom: 4px;
+            background: white; border-radius: 6px;
+            font-size: 0.9rem; border-left: 3px solid var(--sage);
+        }
+        .congregant-item .cname { font-weight: 600; }
+        .congregant-item .cloc { color: var(--sage); font-size: 0.85rem; font-style: italic; }
+
+        /* Occupancy bar */
+        .occupancy-bar-wrap { margin: 0.75rem 0; }
+        .occupancy-label { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 4px; }
+        .occupancy-bar { height: 10px; background: var(--beige); border-radius: 5px; overflow: hidden; }
+        .occupancy-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease; }
+        .fill-green { background: var(--green-avail); }
+        .fill-yellow { background: var(--yellow-mid); }
+        .fill-red { background: var(--red-full); }
+
+        /* Passengers list */
+        .passengers-list { margin-top: 0.75rem; }
+        .passenger-item {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 5px 8px; margin-bottom: 4px;
+            background: white; border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .passenger-item i { color: var(--sage); }
+
+        /* Host photo */
+        .host-photo {
+            width: 60px; height: 60px; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--cream);
+        }
+        .photo-placeholder {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--sage); color: var(--cream);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; border: 3px solid var(--cream); flex-shrink: 0;
+        }
+
+        /* Toast */
+        #toastContainer {
+            position: fixed; bottom: 30px; right: 30px;
+            z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .toast {
+            background: var(--sage); color: white;
+            padding: 12px 20px; border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(93,102,88,0.3);
+            font-family: 'Cormorant Garamond', serif; font-size: 1.05rem;
+            animation: toastIn 0.3s ease; display: flex; align-items: center; gap: 0.75rem;
+            min-width: 260px;
+        }
+        .toast.success { background: var(--green-avail); }
+        .toast.error { background: var(--red-full); }
+        .toast.warning { background: var(--yellow-mid); }
+        @keyframes toastIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(60px); } }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 3rem 2rem; color: var(--sage);
+        }
+        .empty-state i { font-size: 3.5rem; opacity: 0.3; display: block; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1.1rem; font-style: italic; }
+
+        /* Form grid */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+        .form-grid .full { grid-column: 1 / -1; }
+
+        /* Badge small */
+        .badge-small {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+            background: var(--beige); color: var(--text-dark);
+        }
+        .badge-avail { background: #d4edda; color: var(--green-avail); }
+        .badge-mid { background: #fff3cd; color: var(--yellow-mid); }
+        .badge-full { background: #f8d7da; color: var(--red-full); }
+
+        /* Decorative */
+        .decorative-line { height: 2px; background: linear-gradient(90deg, transparent, var(--sage), transparent); margin: 2rem 0; }
+
+        /* Export buttons row */
+        .export-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+        .export-row .btn-export { margin-top: 0; }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; text-align: center; }
+            .header-left, .header-right { width: 100%; justify-content: center; }
+            .clock { text-align: center; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid.three { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .main-app { padding: 1rem; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .search-filter-bar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="login-container" id="loginScreen">
+    <div class="login-box">
+        <h1>Protocolo Ebenezer</h1>
+        <p class="subtitle">Sistema de Registro de Servidores</p>
+        <div class="decorative-line"></div>
+        <form id="loginForm">
+            <div class="input-group">
+                <label><i class="fas fa-user"></i> Usuario</label>
+                <input type="text" id="username" required placeholder="Ingrese su usuario">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-lock"></i> Contraseña</label>
+                <input type="password" id="password" required placeholder="Ingrese su contraseña">
+            </div>
+            <button type="submit" class="btn-vintage">
+                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+            </button>
+        </form>
+        <p style="margin-top:1.5rem;font-size:0.9rem;color:var(--sage);opacity:0.7;">
+            <i class="fas fa-shield-alt"></i> Acceso seguro y confidencial
+        </p>
+    </div>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div class="main-app" id="mainApp">
+    <header class="header">
+        <div class="header-left">
+            <div>
+                <h1>Protocolo Ebenezer Honduras</h1>
+                <p class="verse">"Sirviendo con excelencia y dedicación"</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="clock">
+                <div id="time">00:00:00</div>
+                <div id="date" style="font-size:0.9rem;opacity:0.9;"></div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+        </div>
+    </header>
+
+    <!-- MODULE NAV -->
+    <div class="module-nav">
+        <button class="module-tab active" onclick="showModule('asistencia')" id="tab-asistencia">
+            <i class="fas fa-clipboard-check"></i> Asistencia
+        </button>
+        <button class="module-tab" onclick="showModule('logistica')" id="tab-logistica">
+            <i class="fas fa-truck"></i> Logística
+        </button>
+    </div>
+
+    <!-- ========= ASISTENCIA MODULE ========= -->
+    <div id="asistenciaModule">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="icon"><i class="fas fa-users"></i></div><div class="number" id="totalCount">0</div><div class="label">Total Registrados</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-user-friends"></i></div><div class="number" id="teamACount">0</div><div class="label">Equipo A</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-user-friends"></i></div><div class="number" id="teamBCount">0</div><div class="label">Equipo B</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-user-friends"></i></div><div class="number" id="teamCCount">0</div><div class="label">Equipo C</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-user-friends"></i></div><div class="number" id="teamDCount">0</div><div class="label">Equipo D</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-crown"></i></div><div class="number" id="teamLeadershipCount">0</div><div class="label">Liderazgo</div></div>
+        </div>
+
+        <div class="content-grid">
+            <div class="registration-section">
+                <h2 class="section-title"><i class="fas fa-clipboard-list"></i> Registro de Asistencia</h2>
+                <div class="dni-input-container">
+                    <input type="text" class="dni-input" id="dniInput" placeholder="Ingrese número de DNI" maxlength="20" autofocus>
+                </div>
+                <button class="btn-vintage" onclick="registerAttendance()">
+                    <i class="fas fa-check-circle"></i> Registrar Entrada
+                </button>
+                <div class="decorative-line"></div>
+                <div id="lastRegistered" style="text-align:center;padding:1rem;background:var(--antique);border-radius:8px;display:none;">
+                    <p style="color:var(--sage);font-style:italic;">Último registro:</p>
+                    <p id="lastUserName" style="font-weight:600;font-size:1.2rem;margin:0.5rem 0;"></p>
+                    <div id="lastUserTeam"></div>
+                </div>
+            </div>
+            <div class="history-section">
+                <h2 class="section-title"><i class="fas fa-history"></i> Historial del Día</h2>
+                <div id="attendanceList">
+                    <p style="text-align:center;color:var(--sage);padding:2rem;">
+                        <i class="fas fa-inbox" style="font-size:3rem;display:block;margin-bottom:1rem;opacity:0.3;"></i>
+                        No hay registros aún
+                    </p>
+                </div>
+                <button class="btn-export" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf"></i> Exportar a PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========= LOGISTICS MODULE ========= -->
+    <div id="logisticsModule">
+        <!-- Logistics Stats -->
+        <div class="stats-grid" id="logStatsGrid">
+            <div class="stat-card"><div class="icon"><i class="fas fa-church"></i></div><div class="number" id="ls-iglesias">0</div><div class="label">Iglesias Invitadas</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-user-tie"></i></div><div class="number" id="ls-pastores">0</div><div class="label">Pastores Registrados</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-users"></i></div><div class="number" id="ls-visitantes">0</div><div class="label">Personas Visitantes</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-home"></i></div><div class="number" id="ls-casas">0</div><div class="label">Casas Disponibles</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-bed"></i></div><div class="number" id="ls-cupos">0</div><div class="label">Cupos Disponibles</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-car"></i></div><div class="number" id="ls-conductores">0</div><div class="label">Conductores</div></div>
+            <div class="stat-card"><div class="icon"><i class="fas fa-bus"></i></div><div class="number" id="ls-vehiculos">0</div><div class="label">Vehículos Registrados</div></div>
+        </div>
+
+        <!-- Sub tabs -->
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="showSubTab('llegadas')" id="stab-llegadas">
+                <i class="fas fa-church"></i> Llegadas de Pastores
+            </button>
+            <button class="sub-tab" onclick="showSubTab('hospedaje')" id="stab-hospedaje">
+                <i class="fas fa-home"></i> Hospedaje
+            </button>
+            <button class="sub-tab" onclick="showSubTab('transporte')" id="stab-transporte">
+                <i class="fas fa-car"></i> Transporte
+            </button>
+        </div>
+
+        <!-- ---- LLEGADAS DE PASTORES ---- -->
+        <div id="sub-llegadas">
+            <div class="logistics-section">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                    <h2 class="section-title" style="margin-bottom:0;border:none;padding:0;">
+                        <i class="fas fa-church"></i> Iglesias Visitantes
+                    </h2>
+                    <button class="btn-vintage" style="width:auto;margin:0;" onclick="openChurchModal()">
+                        <i class="fas fa-plus"></i> Agregar Iglesia
+                    </button>
+                </div>
+                <div class="decorative-line"></div>
+                <div class="search-filter-bar">
+                    <input class="search-input" id="searchChurch" placeholder="🔍 Buscar por iglesia, pastor, ciudad..." oninput="renderChurches()">
+                </div>
+                <div class="cards-grid" id="churchesList">
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <i class="fas fa-church"></i><p>No hay iglesias registradas aún</p>
+                    </div>
+                </div>
+            </div>
+            <div class="export-row">
+                <button class="btn-export" onclick="exportLogisticsPDF()"><i class="fas fa-file-pdf"></i> Exportar Logística a PDF</button>
+                <button class="btn-export" onclick="exportLogisticsCSV()"><i class="fas fa-file-excel"></i> Exportar Logística a Excel</button>
+            </div>
+        </div>
+
+        <!-- ---- HOSPEDAJE ---- -->
+        <div id="sub-hospedaje" style="display:none;">
+            <div class="logistics-section">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                    <h2 class="section-title" style="margin-bottom:0;border:none;padding:0;">
+                        <i class="fas fa-home"></i> Casas de Hospedaje
+                    </h2>
+                    <button class="btn-vintage" style="width:auto;margin:0;" onclick="openHostModal()">
+                        <i class="fas fa-plus"></i> Agregar Casa
+                    </button>
+                </div>
+                <div class="decorative-line"></div>
+                <div class="search-filter-bar">
+                    <input class="search-input" id="searchHost" placeholder="🔍 Buscar por nombre, dirección, barrio..." oninput="renderHosts()">
+                    <button class="filter-btn" id="filter-avail" onclick="toggleFilter('avail')">Disponible</button>
+                    <button class="filter-btn" id="filter-full" onclick="toggleFilter('full')">Lleno</button>
+                </div>
+                <div class="cards-grid" id="hostsList">
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <i class="fas fa-home"></i><p>No hay casas de hospedaje registradas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- TRANSPORTE ---- -->
+        <div id="sub-transporte" style="display:none;">
+            <div class="logistics-section">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                    <h2 class="section-title" style="margin-bottom:0;border:none;padding:0;">
+                        <i class="fas fa-car"></i> Conductores y Vehículos
+                    </h2>
+                    <button class="btn-vintage" style="width:auto;margin:0;" onclick="openDriverModal()">
+                        <i class="fas fa-plus"></i> Agregar Conductor
+                    </button>
+                </div>
+                <div class="decorative-line"></div>
+                <div class="search-filter-bar">
+                    <input class="search-input" id="searchDriver" placeholder="🔍 Buscar por nombre, vehículo, placa..." oninput="renderDrivers()">
+                    <button class="filter-btn" id="filter-trans-avail" onclick="toggleFilter('trans-avail')">Disponible</button>
+                    <button class="filter-btn" id="filter-trans-full" onclick="toggleFilter('trans-full')">Lleno</button>
+                </div>
+                <div class="cards-grid" id="driversList">
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <i class="fas fa-car"></i><p>No hay conductores registrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======= MODALS ======= -->
+
+<!-- Success Modal -->
+<div class="modal" id="successModal">
+    <div class="modal-content">
+        <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+        <h2>¡Registro Exitoso!</h2>
+        <p id="modalUserName" style="font-size:1.5rem;margin:1rem 0;color:var(--text-dark);"></p>
+        <div id="modalUserTeam" style="margin:1rem 0;"></div>
+        <p id="modalTime" style="color:var(--sage);font-style:italic;"></p>
+        <button class="btn-vintage" onclick="closeModal()" style="margin-top:2rem;"><i class="fas fa-times"></i> Cerrar</button>
+    </div>
+</div>
+
+<!-- Logout Modal -->
+<div class="modal" id="logoutModal">
+    <div class="modal-content">
+        <div style="font-size:5rem;color:var(--sage);margin-bottom:1rem;"><i class="fas fa-sign-out-alt"></i></div>
+        <h2>¿Cerrar Sesión?</h2>
+        <p style="margin:1.5rem 0;color:var(--text-dark);font-size:1.1rem;">Los registros se guardarán automáticamente.<br>¿Desea continuar?</p>
+        <div style="display:flex;gap:1rem;justify-content:center;">
+            <button class="btn-vintage" onclick="confirmLogout()" style="flex:1;max-width:150px;"><i class="fas fa-check"></i> Sí, Cerrar</button>
+            <button class="btn-vintage" onclick="cancelLogout()" style="flex:1;max-width:150px;background:var(--beige);color:var(--text-dark);"><i class="fas fa-times"></i> Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal" id="deleteModal">
+    <div class="modal-content">
+        <div style="font-size:4rem;color:var(--red-full);margin-bottom:1rem;"><i class="fas fa-trash-alt"></i></div>
+        <h2 style="color:var(--red-full);">¿Eliminar registro?</h2>
+        <p style="margin:1.5rem 0;color:var(--text-dark);font-size:1.1rem;" id="deleteMsg">Esta acción no se puede deshacer.</p>
+        <div style="display:flex;gap:1rem;justify-content:center;">
+            <button class="btn-vintage" onclick="confirmDelete()" style="flex:1;max-width:160px;background:var(--red-full);"><i class="fas fa-trash"></i> Eliminar</button>
+            <button class="btn-vintage" onclick="cancelDelete()" style="flex:1;max-width:160px;background:var(--beige);color:var(--text-dark);"><i class="fas fa-times"></i> Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Church Modal -->
+<div class="modal" id="churchModal">
+    <div class="modal-content modal-lg" style="max-height:90vh;overflow-y:auto;">
+        <h2 style="text-align:center;"><i class="fas fa-church"></i> <span id="churchModalTitle">Nueva Iglesia</span></h2>
+        <div class="decorative-line"></div>
+        <div class="form-grid">
+            <div class="input-group full">
+                <label>Nombre de la Iglesia *</label>
+                <input type="text" id="ch-name" placeholder="Iglesia Ebenezer La Ceiba">
+            </div>
+            <div class="input-group">
+                <label>Ciudad *</label>
+                <input type="text" id="ch-city" placeholder="La Ceiba">
+            </div>
+            <div class="input-group">
+                <label>Fecha de Llegada *</label>
+                <input type="date" id="ch-date">
+            </div>
+            <div class="input-group">
+                <label>Hora Estimada de Llegada</label>
+                <input type="time" id="ch-time">
+            </div>
+            <div class="input-group">
+                <label>Pastor Principal *</label>
+                <input type="text" id="ch-pastor" placeholder="Nombre del pastor">
+            </div>
+            <div class="input-group">
+                <label>Esposa del Pastor</label>
+                <input type="text" id="ch-wife" placeholder="Nombre de la esposa">
+            </div>
+            <div class="input-group full">
+                <label>Observaciones</label>
+                <textarea id="ch-obs" placeholder="Notas adicionales..."></textarea>
+            </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;margin-bottom:0.75rem;">
+            <h3 style="font-family:'Playfair Display',serif;color:var(--sage);">
+                <i class="fas fa-users"></i> Congregación Visitante
+            </h3>
+            <button class="btn-export" style="margin-top:0;" onclick="addCongregantRow()">
+                <i class="fas fa-user-plus"></i> Agregar Persona
+            </button>
+        </div>
+        <div id="congregantRows"></div>
+
+        <div style="display:flex;gap:1rem;margin-top:1.5rem;justify-content:flex-end;">
+            <button class="btn-vintage" style="width:auto;margin:0;" onclick="saveChurch()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <button class="btn-export" style="margin-top:0;" onclick="closeChurchModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Host Modal -->
+<div class="modal" id="hostModal">
+    <div class="modal-content modal-lg" style="max-height:90vh;overflow-y:auto;">
+        <h2 style="text-align:center;"><i class="fas fa-home"></i> <span id="hostModalTitle">Nueva Casa de Hospedaje</span></h2>
+        <div class="decorative-line"></div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Nombre Completo *</label>
+                <input type="text" id="ho-name" placeholder="Familia Gómez">
+            </div>
+            <div class="input-group">
+                <label>Teléfono</label>
+                <input type="tel" id="ho-phone" placeholder="+504 9999-9999">
+            </div>
+            <div class="input-group full">
+                <label>Dirección</label>
+                <input type="text" id="ho-address" placeholder="Col. Kennedy, calle principal">
+            </div>
+            <div class="input-group">
+                <label>Barrio / Colonia</label>
+                <input type="text" id="ho-neighborhood" placeholder="Col. Kennedy">
+            </div>
+            <div class="input-group">
+                <label>Capacidad Máxima *</label>
+                <input type="number" id="ho-capacity" min="1" placeholder="10">
+            </div>
+            <div class="input-group">
+                <label>Habitaciones Disponibles</label>
+                <input type="number" id="ho-rooms" min="0" placeholder="3">
+            </div>
+            <div class="input-group full">
+                <label>Observaciones</label>
+                <textarea id="ho-obs" placeholder="Notas sobre la casa..."></textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:1.5rem;justify-content:flex-end;">
+            <button class="btn-vintage" style="width:auto;margin:0;" onclick="saveHost()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <button class="btn-export" style="margin-top:0;" onclick="closeHostModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Driver Modal -->
+<div class="modal" id="driverModal">
+    <div class="modal-content modal-lg" style="max-height:90vh;overflow-y:auto;">
+        <h2 style="text-align:center;"><i class="fas fa-car"></i> <span id="driverModalTitle">Nuevo Conductor</span></h2>
+        <div class="decorative-line"></div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Nombre Completo *</label>
+                <input type="text" id="dr-name" placeholder="Hermano Carlos Rodríguez">
+            </div>
+            <div class="input-group">
+                <label>Teléfono</label>
+                <input type="tel" id="dr-phone" placeholder="+504 9999-9999">
+            </div>
+            <div class="input-group">
+                <label>Tipo de Vehículo *</label>
+                <input type="text" id="dr-vehicle" placeholder="Toyota Hiace">
+            </div>
+            <div class="input-group">
+                <label>Placa</label>
+                <input type="text" id="dr-plate" placeholder="HND-1234">
+            </div>
+            <div class="input-group">
+                <label>Capacidad del Vehículo *</label>
+                <input type="number" id="dr-capacity" min="1" placeholder="15">
+            </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;margin-bottom:0.75rem;">
+            <h3 style="font-family:'Playfair Display',serif;color:var(--sage);">
+                <i class="fas fa-users"></i> Asignar Pasajeros
+            </h3>
+        </div>
+        <div class="input-group">
+            <label>Buscar y seleccionar personas registradas</label>
+            <input type="text" id="dr-search-passenger" placeholder="Escriba nombre o iglesia..." oninput="searchPassengers()">
+        </div>
+        <div id="dr-passenger-results" style="max-height:150px;overflow-y:auto;border:2px solid var(--beige);border-radius:8px;margin-bottom:1rem;"></div>
+        <div id="dr-passengers-selected" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;"></div>
+
+        <div style="display:flex;gap:1rem;margin-top:0.5rem;justify-content:flex-end;">
+            <button class="btn-vintage" style="width:auto;margin:0;" onclick="saveDriver()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <button class="btn-export" style="margin-top:0;" onclick="closeDriverModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Host Modal -->
+<div class="modal" id="assignHostModal">
+    <div class="modal-content modal-lg" style="max-height:90vh;overflow-y:auto;">
+        <h2 style="text-align:center;"><i class="fas fa-user-plus"></i> Asignar Huéspedes</h2>
+        <div class="decorative-line"></div>
+        <p style="color:var(--sage);margin-bottom:1rem;font-size:1rem;">Seleccione personas de las iglesias visitantes para hospedar en: <strong id="assignHostName"></strong></p>
+        <div class="input-group">
+            <input type="text" id="assign-search" placeholder="Buscar por nombre o iglesia..." oninput="renderAssignList()">
+        </div>
+        <div id="assignList" style="max-height:300px;overflow-y:auto;border:2px solid var(--beige);border-radius:8px;margin-bottom:1rem;"></div>
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button class="btn-vintage" style="width:auto;margin:0;" onclick="saveHostAssignments()">
+                <i class="fas fa-save"></i> Guardar Asignaciones
+            </button>
+            <button class="btn-export" style="margin-top:0;" onclick="closeAssignHostModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<script>
+// ====================================================
+// ORIGINAL ATTENDANCE SYSTEM (preserved intact)
+// ====================================================
+const membersDatabase = {
+    "0502200901502": { name: "Adriana Carolina Valle Brocato", team: "B" },
+    "0501197707946": { name: "Aida Victoria Bermudez Alvarado", team: "B" },
+    "0501197710303": { name: "Alejandra Isabel Garay Hernández", team: "C" },
+    "0801198508654": { name: "Alejandra Maria Diaz Chavez", team: "C" },
+    "16242862504455": { name: "Alexander Pineda", team: "B" },
+    "0502199301958": { name: "Allan Javier Lopez Perez", team: "C" },
+    "0501197505957": { name: "Ana Ivis Garcia Fernandez", team: "B" },
+    "1407198400223": { name: "Ana Mirian Garcia Garcia", team: "B" },
+    "0801197603178": { name: "Ana Patricia Rodriguez Cartagena", team: "A" },
+    "020405200603260": { name: "Anabella Beatriz Castellanos Godinez", team: "B" },
+    "0502200802973": { name: "Andrea Elizabeth Valle Brocato", team: "B" },
+    "0501199509147": { name: "Andrea Nikole Larios Fajardo", team: "D" },
+    "0502199803457": { name: "Angela Lucia Tobar Losada", team: "B" },
+    "0512198300010": { name: "Annie Paola Cortez Rivera", team: "C" },
+    "0501199104818": { name: "Antonio Ramon Echeverria Torres", team: "C" },
+    "0801197601460": { name: "Armando Ribelino Larios Maradiaga", team: "D" },
+    "0501200603536": { name: "Ashlee Angeline Rivas Bejarano", team: "C" },
+    "0801197805550": { name: "Avy Gabriela Hernandez Espinal de Bardales", team: "B" },
+    "0501196607749": { name: "Berta Ondina Acosta Lainez", team: "A" },
+    "1502197700213": { name: "Bertha Lidia Soto Granados", team: "A" },
+    "0801197001779": { name: "Bessy Yadira Escalante Escoto", team: "D" },
+    "0501198510962": { name: "Blanca Melissa Guzman Amaya de Andrade", team: "D" },
+    "0501200807164": { name: "Caesar Benitez Ramos", team: "B" },
+    "0512199401873": { name: "Carlos Augusto Oyuela Argueta", team: "B" },
+    "0512199700480": { name: "Carlos Roberto Flores", team: "C" },
+    "0501197905922": { name: "Carmen Xiomara Bohorquez Marquez", team: "D" },
+    "1103198000054": { name: "Charisma Yamira Lamberth Cacho", team: "B" },
+    "1627199100421": { name: "Cintia Estefany Argueta Tinoco", team: "B" },
+    "0502198801612": { name: "Claudia Iveth Brocato Castañeda", team: "B" },
+    "0501198003474": { name: "Claudia Patricia Peña Flores", team: "C" },
+    "0501200814065": { name: "David Fernando Marquez Garay", team: "C" },
+    "1313200300544": { name: "David Josue Guillen Vallecillo", team: "C" },
+    "0801198503759": { name: "Delcy Marinelly Romero García de Guillén", team: "DIACONO" },
+    "0501198107262": { name: "Dennis Allan Fuentes Serrano", team: "A" },
+    "0318196700271": { name: "Dora Yaneth Saenz de Pineda", team: "D" },
+    "0501198305060": { name: "Dulce María López Antúnez", team: "A" },
+    "0501197905257": { name: "Dunia Lizeth Sánchez Gómez", team: "D" },
+    "0101197802806": { name: "Edimia Sirey Meraz Reyes", team: "B" },
+    "0501200706712": { name: "Edith Alejandra Duarte Ferrera", team: "D" },
+    "0501201405482": { name: "Eiza Maria Marquez Garay", team: "C" },
+    "0409200400638": { name: "Elissa Carolina Caballero Pereza", team: "B" },
+    "0307197500125": { name: "Fany Janeth Bulnes Lopez", team: "C" },
+    "0501201601249": { name: "Fares David Morales Rivera", team: "D" },
+    "0501198301028": { name: "Felipe Salomon Mourra Chinchilla", team: "A" },
+    "0406197700093": { name: "Floricelda Mejia", team: "A" },
+    "0801196403113": { name: "Francis Elizabeth Martinez Morga", team: "D" },
+    "1503198801503": { name: "Francis Leonardo Andrade Aguilar", team: "D" },
+    "1805198300154": { name: "Francisca Evit Castillo Hernandez", team: "A" },
+    "0801198708572": { name: "Gabriela María Bardales Madrid", team: "C" },
+    "0501201415845": { name: "Génesis Dayana Fuentes Mejía", team: "A" },
+    "0501199701003": { name: "Gladys Nohemy Ayala", team: "B" },
+    "1804197500853": { name: "Gloria Edith Ferrera de Duarte", team: "D" },
+    "0501198809076": { name: "Hector Alejandro Bardales Madrid", team: "C" },
+    "1313198400176": { name: "Héctor Alejandro Guillén Vallecillo", team: "DIACONO" },
+    "0501197000779": { name: "Imelda Francisca Argueta Flores", team: "B" },
+    "0501198607020": { name: "Ingrid Vanessa Zelaya Moncada", team: "B" },
+    "1801198001269": { name: "Irene Vanessa Torres Reyes", team: "A" },
+    "0801200012479": { name: "Jackeline Gabriela Mondragón Zelaya", team: "C" },
+    "0501199409662": { name: "Jennifer Kassandra Reyes Castillo", team: "C" },
+    "715199300894": { name: "Jessica Lorena Galo Pineda", team: "B" },
+    "0501198304863": { name: "Jessy Nohemy Moreno Benitez de Lopez", team: "A" },
+    "0502198102151": { name: "Jorge Salomón Paz Gomez", team: "B" },
+    "0501201011271": { name: "Jose Luis Rodriguez Bohorquez", team: "D" },
+    "0501201110977": { name: "Josue Daniel Marquez Garay", team: "C" },
+    "0501198705293": { name: "Josué David Diego Carcamo", team: "C" },
+    "0501200817823": { name: "Josue Sayd Rivas Bejarano", team: "C" },
+    "0801198310306": { name: "Juan Bautista Carrasco Rodriguez", team: "C" },
+    "1301197400448": { name: "Juan Francisco Lopez", team: "B" },
+    "0501198812381": { name: "Judith Grasibel Aguilar Rivera", team: "C" },
+    "0501196704829": { name: "Julia Marlen Castillo Varela", team: "C" },
+    "0501198301299": { name: "Kelyn Yaritza Rivera de Morales", team: "D" },
+    "0314197200038": { name: "Leisly Yamileth Reyes Mazariegos", team: "C" },
+    "0512199201373": { name: "Lenin Ernesto Galeas Lanza", team: "C" },
+    "0310200605946": { name: "Lester Alfonso Hernandez Castellanos", team: "A" },
+    "1811197800137": { name: "Liliam Elizabeth López Portillo", team: "B" },
+    "0801197704312": { name: "Lizzeth Yackelin Valeriano Antúnez de Mata", team: "A" },
+    "0501199108500": { name: "Lourdes Mariela Vasquez Abrego", team: "B" },
+    "0501196300587": { name: "Lourdes Suyapa Abrego Martinez", team: "B" },
+    "0801197108874": { name: "Luis Alberto Diaz Matute", team: "C" },
+    "0501196705684": { name: "Luis Andres Jeer Mejia", team: "ANCIANO" },
+    "0801197809184": { name: "Mabel Mayly Lopez Perdomo", team: "C" },
+    "0501195805925": { name: "Maby Flores de Fasquelle", team: "C" },
+    "1623198000976": { name: "María Clementina Pineda Castellanos", team: "A" },
+    "011209200501131": { name: "Maria del Pilar Puerto Peña de Cole", team: "B" },
+    "0508195400136": { name: "Maria del Rosario Madrid Figueroa", team: "C" },
+    "0801196103812": { name: "Maria del Transito Lozano Arteaga de Fonseca", team: "D" },
+    "0501197404925": { name: "Maria Elena Canales Velasquez", team: "A" },
+    "021809200605750": { name: "Maria Elena Paz Zequeira", team: "D" },
+    "0406196600213": { name: "Maria Sara Isabel Contreras", team: "D" },
+    "0501199209661": { name: "Mario Alberto Pineda Saenz", team: "D" },
+    "0501199407919": { name: "Mario Josue Vasquez Cubas", team: "B" },
+    "0107197800021": { name: "Maritza Yamileth Cantillano Urbina", team: "B" },
+    "0501198201684": { name: "Marlon Aldenis Molina Mancia", team: "A" },
+    "0710197900014": { name: "Mary Magdalena Irias Peralta", team: "A" },
+    "0501200905452": { name: "Milagro de Jesus Rodriguez Bohorquez", team: "D" },
+    "0501198607628": { name: "Olga Iveth Fajardo Fajardo", team: "C" },
+    "0508196200113": { name: "Onaida Yolanda Carranza Hernández", team: "D" },
+    "1613198101717": { name: "Oscar Osman Cárdenas", team: "B" },
+    "0501199605764": { name: "Paola Antonella Paz Martinez", team: "D" },
+    "1618198700610": { name: "Quelim Gedaly Morales Pérez", team: "D" },
+    "0502200501992": { name: "Ramon Aldenis Molina Trochez", team: "A" },
+    "0501200905049": { name: "Rebeca Elizabeth Hernandez Canales", team: "A" },
+    "0502201200578": { name: "Rene Caleb Molina Trochez", team: "A" },
+    "0502198202059": { name: "Reynaldo Reniery Mata Osorio", team: "A" },
+    "0512200101676": { name: "Roberto Augusto Oyuela Argueta", team: "B" },
+    "0208195900167": { name: "Rosa Ana Canales Almendares", team: "B" },
+    "0501196703795": { name: "Rosibel Sanchez Martinez de Jeer", team: "ANCIANO" },
+    "0512199201029": { name: "Rossy Mariela Flores Rivera", team: "C" },
+    "1801197000054": { name: "Rudy Janett Garmendia Ramirez de Sabillon", team: "A" },
+    "0501197802904": { name: "Sandra Carolina Maldonado", team: "C" },
+    "0703199302654": { name: "Sandy Mariela Posante Chacon", team: "C" },
+    "0501200108489": { name: "Sarah Abigail Dacosta Fernández", team: "C" },
+    "0501197008069": { name: "Selvin Geovany Sanchez Cruz", team: "C" },
+    "0801196700183": { name: "Servio Tulio Romero Elvir", team: "D" },
+    "0501196707066": { name: "Soraya Monserrat Gomez Diaz", team: "B" },
+    "0503198000053": { name: "Tomasa Lilieth Alvarado Escobar", team: "A" },
+    "1626198200331": { name: "Vanessa Lizeth Yanes Paredes", team: "A" },
+    "0501198204467": { name: "Vany Sarahi Trochez Enamorado de Molina", team: "A" },
+    "0501199710505": { name: "Victoria Alejandra García Bermúdez", team: "B" },
+    "0501197511163": { name: "Wendy Carolina Cruz Portillo", team: "D" },
+    "0321199800242": { name: "Wendy Patricia Castro Moran", team: "C" },
+    "0501200108212": { name: "Wilmer Eduardo Castellón Bulnes", team: "C" },
+    "0801197600707": { name: "Yasmin Xiomara Cubas Elvir", team: "B" }
+};
+
+let attendanceRecords = [];
+let currentUser = null;
+
+const VALID_CREDENTIALS = { 'admin': 'protocolo2024', 'usuario': 'ebenezer123' };
+
+function updateClock() {
+    const now = new Date();
+    document.getElementById('time').textContent = now.toLocaleTimeString('es-HN', { hour12: false });
+    document.getElementById('date').textContent = now.toLocaleDateString('es-HN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    if (VALID_CREDENTIALS[username] && VALID_CREDENTIALS[username] === password) {
+        currentUser = username;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('dniInput').focus();
+    } else {
+        showToast('Credenciales incorrectas. Por favor intente nuevamente.', 'error');
+    }
+});
+
+function logout() { document.getElementById('logoutModal').style.display = 'flex'; }
+function confirmLogout() {
+    currentUser = null;
+    attendanceRecords = [];
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('logoutModal').style.display = 'none';
+    updateStats();
+    updateHistory();
+    document.getElementById('lastRegistered').style.display = 'none';
+}
+function cancelLogout() { document.getElementById('logoutModal').style.display = 'none'; }
+
+function registerAttendance() {
+    const dni = document.getElementById('dniInput').value.trim();
+    if (!dni) { showToast('Por favor ingrese un número de DNI', 'warning'); return; }
+    const member = membersDatabase[dni];
+    if (!member) {
+        showToast('Miembro no encontrado en la base de datos', 'error');
+        document.getElementById('dniInput').value = '';
+        document.getElementById('dniInput').focus();
+        return;
+    }
+    if (attendanceRecords.some(r => r.dni === dni)) {
+        showToast('Este miembro ya ha sido registrado en esta sesión', 'warning');
+        document.getElementById('dniInput').value = '';
+        document.getElementById('dniInput').focus();
+        return;
+    }
+    const now = new Date();
+    const record = { dni, name: member.name, team: member.team, time: now.toLocaleTimeString('es-HN', { hour12: false }), timestamp: now };
+    attendanceRecords.push(record);
+    showSuccessModal(record);
+    updateStats();
+    updateHistory();
+    document.getElementById('dniInput').value = '';
+    document.getElementById('dniInput').focus();
+}
+
+function showSuccessModal(record) {
+    document.getElementById('modalUserName').textContent = record.name;
+    document.getElementById('modalUserTeam').innerHTML = `<span class="team-badge team-${record.team.toLowerCase()}">Equipo ${record.team}</span>`;
+    document.getElementById('modalTime').textContent = `Registrado a las ${record.time}`;
+    document.getElementById('successModal').style.display = 'flex';
+    document.getElementById('lastRegistered').style.display = 'block';
+    document.getElementById('lastUserName').textContent = record.name;
+    document.getElementById('lastUserTeam').innerHTML = `<span class="team-badge team-${record.team.toLowerCase()}">Equipo ${record.team}</span>`;
+    setTimeout(() => { closeModal(); }, 3000);
+}
+function closeModal() { document.getElementById('successModal').style.display = 'none'; }
+
+function updateStats() {
+    const counts = { A: 0, B: 0, C: 0, D: 0, LIDERAZGO: 0, DIACONO: 0, ANCIANO: 0 };
+    attendanceRecords.forEach(r => { if (counts[r.team] !== undefined) counts[r.team]++; });
+    document.getElementById('totalCount').textContent = attendanceRecords.length;
+    document.getElementById('teamACount').textContent = counts.A;
+    document.getElementById('teamBCount').textContent = counts.B;
+    document.getElementById('teamCCount').textContent = counts.C;
+    document.getElementById('teamDCount').textContent = counts.D;
+    document.getElementById('teamLeadershipCount').textContent = counts.LIDERAZGO + counts.DIACONO + counts.ANCIANO;
+}
+
+function updateHistory() {
+    const list = document.getElementById('attendanceList');
+    if (attendanceRecords.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:var(--sage);padding:2rem;"><i class="fas fa-inbox" style="font-size:3rem;display:block;margin-bottom:1rem;opacity:0.3;"></i>No hay registros aún</p>`;
+        return;
+    }
+    list.innerHTML = attendanceRecords.slice().reverse().map(record => `
+        <div class="attendance-item">
+            <div class="name">${record.name}</div>
+            <div class="meta">
+                <span class="team-badge team-${record.team.toLowerCase()}">Equipo ${record.team}</span>
+                <span style="margin-left:10px;"><i class="far fa-clock"></i> ${record.time}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function exportToPDF() {
+    if (attendanceRecords.length === 0) { showToast('No hay registros para exportar', 'warning'); return; }
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const colors = { sage: [93,102,88], cream: [247,230,202], beige: [244,228,217] };
+    pdf.setFillColor(...colors.sage);
+    pdf.rect(0, 0, 210, 40, 'F');
+    pdf.setTextColor(255,255,255);
+    pdf.setFontSize(24);
+    pdf.text('PROTOCOLO EBENEZER HONDURAS', 105, 20, { align: 'center' });
+    pdf.setFontSize(12);
+    pdf.text('Registro de Servidores', 105, 30, { align: 'center' });
+    pdf.setTextColor(...colors.sage);
+    pdf.setFontSize(14);
+    pdf.text(`Fecha: ${new Date().toLocaleDateString('es-HN')}`, 14, 55);
+    pdf.text(`Total de Registros: ${attendanceRecords.length}`, 14, 63);
+    pdf.setFillColor(...colors.beige);
+    pdf.rect(14, 70, 182, 10, 'F');
+    pdf.setTextColor(...colors.sage);
+    pdf.setFontSize(11);
+    pdf.text('#', 18, 76); pdf.text('NOMBRE', 30, 76); pdf.text('EQUIPO', 120, 76); pdf.text('HORA', 160, 76);
+    pdf.setFontSize(10);
+    attendanceRecords.forEach((record, index) => {
+        const y = 82 + (index * 8);
+        if (y > 280) { pdf.addPage(); return; }
+        pdf.text(`${index+1}`, 18, y);
+        pdf.text(record.name.substring(0, 40), 30, y);
+        pdf.text(record.team, 120, y);
+        pdf.text(record.time, 160, y);
+    });
+    pdf.save(`Registro_Protocolo_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+document.getElementById('dniInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') registerAttendance();
+});
+
+window.onclick = function(event) {
+    const successModal = document.getElementById('successModal');
+    const logoutModal = document.getElementById('logoutModal');
+    if (event.target === successModal) closeModal();
+    if (event.target === logoutModal) cancelLogout();
+};
+
+// ====================================================
+// MODULE NAVIGATION
+// ====================================================
+function showModule(mod) {
+    document.getElementById('asistenciaModule').style.display = mod === 'asistencia' ? 'block' : 'none';
+    document.getElementById('logisticsModule').style.display = mod === 'logistica' ? 'block' : 'none';
+    document.getElementById('tab-asistencia').classList.toggle('active', mod === 'asistencia');
+    document.getElementById('tab-logistica').classList.toggle('active', mod === 'logistica');
+    if (mod === 'logistica') { updateLogisticsStats(); renderChurches(); renderHosts(); renderDrivers(); }
+    if (mod === 'asistencia') document.getElementById('dniInput').focus();
+}
+
+function showSubTab(tab) {
+    ['llegadas','hospedaje','transporte'].forEach(t => {
+        document.getElementById('sub-' + t).style.display = t === tab ? 'block' : 'none';
+        document.getElementById('stab-' + t).classList.toggle('active', t === tab);
+    });
+}
+
+// ====================================================
+// LOGISTICS DATA (localStorage)
+// ====================================================
+function loadLogistics() {
+    return {
+        churches: JSON.parse(localStorage.getItem('pe_churches') || '[]'),
+        hosts: JSON.parse(localStorage.getItem('pe_hosts') || '[]'),
+        drivers: JSON.parse(localStorage.getItem('pe_drivers') || '[]'),
+    };
+}
+function saveChurches(data) { localStorage.setItem('pe_churches', JSON.stringify(data)); }
+function saveHosts(data) { localStorage.setItem('pe_hosts', JSON.stringify(data)); }
+function saveDrivers(data) { localStorage.setItem('pe_drivers', JSON.stringify(data)); }
+
+function getAllVisitors() {
+    const { churches } = loadLogistics();
+    const people = [];
+    churches.forEach(c => {
+        (c.congregants || []).forEach(p => {
+            people.push({ ...p, churchName: c.name, churchId: c.id });
+        });
+    });
+    return people;
+}
+
+// ====================================================
+// LOGISTICS STATS
+// ====================================================
+function updateLogisticsStats() {
+    const { churches, hosts, drivers } = loadLogistics();
+    const totalVisitors = churches.reduce((s, c) => s + (c.congregants || []).length, 0);
+    const availHosts = hosts.filter(h => (h.capacity - (h.occupants || []).length) > 0).length;
+    const totalCuposAvail = hosts.reduce((s, h) => s + Math.max(0, h.capacity - (h.occupants || []).length), 0);
+    document.getElementById('ls-iglesias').textContent = churches.length;
+    document.getElementById('ls-pastores').textContent = churches.length;
+    document.getElementById('ls-visitantes').textContent = totalVisitors;
+    document.getElementById('ls-casas').textContent = availHosts;
+    document.getElementById('ls-cupos').textContent = totalCuposAvail;
+    document.getElementById('ls-conductores').textContent = drivers.length;
+    document.getElementById('ls-vehiculos').textContent = drivers.length;
+}
+
+// ====================================================
+// CHURCHES
+// ====================================================
+let editingChurchId = null;
+let congregantCount = 0;
+
+function openChurchModal(id = null) {
+    editingChurchId = id;
+    congregantCount = 0;
+    document.getElementById('congregantRows').innerHTML = '';
+    if (id) {
+        const { churches } = loadLogistics();
+        const c = churches.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('churchModalTitle').textContent = 'Editar Iglesia';
+        document.getElementById('ch-name').value = c.name || '';
+        document.getElementById('ch-city').value = c.city || '';
+        document.getElementById('ch-date').value = c.date || '';
+        document.getElementById('ch-time').value = c.time || '';
+        document.getElementById('ch-pastor').value = c.pastor || '';
+        document.getElementById('ch-wife').value = c.wife || '';
+        document.getElementById('ch-obs').value = c.obs || '';
+        (c.congregants || []).forEach(p => addCongregantRow(p));
+    } else {
+        document.getElementById('churchModalTitle').textContent = 'Nueva Iglesia';
+        ['ch-name','ch-city','ch-date','ch-time','ch-pastor','ch-wife','ch-obs'].forEach(id => document.getElementById(id).value = '');
+    }
+    document.getElementById('churchModal').style.display = 'flex';
+}
+function closeChurchModal() { document.getElementById('churchModal').style.display = 'none'; }
+
+function addCongregantRow(data = {}) {
+    const idx = congregantCount++;
+    const row = document.createElement('div');
+    row.className = 'form-grid';
+    row.id = 'crow-' + idx;
+    row.style.cssText = 'margin-bottom:0.75rem;padding:0.75rem;background:var(--antique);border-radius:8px;border:1px solid var(--beige);';
+    row.innerHTML = `
+        <div class="input-group">
+            <label>Nombre Completo *</label>
+            <input type="text" id="c-name-${idx}" value="${data.name||''}" placeholder="Nombre completo">
+        </div>
+        <div class="input-group">
+            <label>Edad</label>
+            <input type="number" id="c-age-${idx}" value="${data.age||''}" placeholder="Edad" min="1">
+        </div>
+        <div class="input-group">
+            <label>Sexo</label>
+            <select id="c-sex-${idx}">
+                <option value="">-- Seleccionar --</option>
+                <option value="M" ${data.sex==='M'?'selected':''}>Masculino</option>
+                <option value="F" ${data.sex==='F'?'selected':''}>Femenino</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Teléfono</label>
+            <input type="tel" id="c-phone-${idx}" value="${data.phone||''}" placeholder="+504 9999-9999">
+        </div>
+        <div class="input-group full" style="grid-column:1/-1;">
+            <label>Hospedaje Asignado</label>
+            <input type="text" id="c-host-${idx}" value="${data.host||''}" placeholder="Casa de Familia Gómez">
+        </div>
+        <div style="grid-column:1/-1;text-align:right;">
+            <button type="button" onclick="removeCongregantRow(${idx})" style="background:none;border:none;color:var(--red-full);cursor:pointer;font-size:0.9rem;font-family:'Cormorant Garamond',serif;">
+                <i class="fas fa-trash"></i> Eliminar persona
+            </button>
+        </div>
+    `;
+    document.getElementById('congregantRows').appendChild(row);
+    if (data.id) row.dataset.pid = data.id;
+}
+function removeCongregantRow(idx) { const el = document.getElementById('crow-'+idx); if (el) el.remove(); }
+
+function saveChurch() {
+    const name = document.getElementById('ch-name').value.trim();
+    const pastor = document.getElementById('ch-pastor').value.trim();
+    if (!name || !pastor) { showToast('El nombre de la iglesia y el pastor son requeridos', 'error'); return; }
+
+    const congregants = [];
+    document.querySelectorAll('[id^="crow-"]').forEach(row => {
+        const idx = row.id.replace('crow-','');
+        const cname = document.getElementById('c-name-'+idx)?.value.trim();
+        if (cname) {
+            congregants.push({
+                id: row.dataset.pid || 'p-' + Date.now() + '-' + Math.random().toString(36).substr(2,5),
+                name: cname,
+                age: document.getElementById('c-age-'+idx)?.value || '',
+                sex: document.getElementById('c-sex-'+idx)?.value || '',
+                phone: document.getElementById('c-phone-'+idx)?.value || '',
+                host: document.getElementById('c-host-'+idx)?.value || '',
+            });
+        }
+    });
+
+    const church = {
+        id: editingChurchId || 'ch-' + Date.now(),
+        name, pastor,
+        city: document.getElementById('ch-city').value.trim(),
+        date: document.getElementById('ch-date').value,
+        time: document.getElementById('ch-time').value,
+        wife: document.getElementById('ch-wife').value.trim(),
+        obs: document.getElementById('ch-obs').value.trim(),
+        congregants
+    };
+
+    const { churches } = loadLogistics();
+    if (editingChurchId) {
+        const idx = churches.findIndex(c => c.id === editingChurchId);
+        if (idx > -1) churches[idx] = church;
+    } else {
+        churches.push(church);
+    }
+    saveChurches(churches);
+    closeChurchModal();
+    renderChurches();
+    updateLogisticsStats();
+    showToast(editingChurchId ? 'Iglesia actualizada correctamente' : 'Iglesia registrada correctamente', 'success');
+}
+
+function renderChurches() {
+    const { churches } = loadLogistics();
+    const q = (document.getElementById('searchChurch')?.value || '').toLowerCase();
+    const filtered = churches.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.pastor.toLowerCase().includes(q) ||
+        c.city.toLowerCase().includes(q) ||
+        (c.wife||'').toLowerCase().includes(q)
+    );
+    const container = document.getElementById('churchesList');
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-church"></i><p>No se encontraron iglesias</p></div>`;
+        return;
+    }
+    container.innerHTML = filtered.map(c => {
+        const count = (c.congregants||[]).length;
+        const dateStr = c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-HN', {day:'2-digit',month:'long',year:'numeric'}) : 'Sin fecha';
+        return `
+        <div class="church-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-church"></i> ${c.name}</h3>
+                    <div class="card-meta">${c.city} · ${dateStr}${c.time ? ' · ' + c.time : ''}</div>
+                </div>
+                <div class="card-actions">
+                    <button class="card-btn" onclick="openChurchModal('${c.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="card-btn danger" onclick="confirmDeleteItem('church','${c.id}','${c.name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-row"><span class="key"><i class="fas fa-user-tie"></i> Pastor</span><span class="val">${c.pastor}</span></div>
+                ${c.wife ? `<div class="card-row"><span class="key"><i class="fas fa-heart"></i> Esposa</span><span class="val">${c.wife}</span></div>` : ''}
+                <div class="card-row"><span class="key"><i class="fas fa-users"></i> Congregación</span><span class="val"><span class="badge-small">${count} persona${count!==1?'s':''}</span></span></div>
+                ${c.obs ? `<div style="font-size:0.85rem;color:var(--sage);font-style:italic;margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--beige);">${c.obs}</div>` : ''}
+            </div>
+            ${count > 0 ? `
+            <button class="toggle-congregants" onclick="toggleCong('cong-${c.id}',this)">
+                <i class="fas fa-chevron-down"></i> Ver Congregación (${count})
+            </button>
+            <div class="congregants-list" id="cong-${c.id}">
+                ${(c.congregants||[]).map(p => `
+                    <div class="congregant-item">
+                        <span class="cname">${p.name}${p.sex?' <small style="color:var(--sage);">('+p.sex+')</small>':''}</span>
+                        <span class="cloc">${p.host || '<em style="opacity:0.5">Sin asignar</em>'}</span>
+                    </div>
+                `).join('')}
+            </div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function toggleCong(id, btn) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+    const icon = btn.querySelector('i');
+    icon.classList.toggle('fa-chevron-down');
+    icon.classList.toggle('fa-chevron-up');
+    btn.querySelector('span') && (btn.innerHTML = el.classList.contains('open')
+        ? `<i class="fas fa-chevron-up"></i> Ocultar Congregación`
+        : `<i class="fas fa-chevron-down"></i> Ver Congregación (${el.querySelectorAll('.congregant-item').length})`);
+}
+
+// ====================================================
+// HOSTS
+// ====================================================
+let editingHostId = null;
+let activeHostFilter = null;
+let assigningHostId = null;
+
+function openHostModal(id = null) {
+    editingHostId = id;
+    if (id) {
+        const { hosts } = loadLogistics();
+        const h = hosts.find(x => x.id === id);
+        if (!h) return;
+        document.getElementById('hostModalTitle').textContent = 'Editar Casa';
+        document.getElementById('ho-name').value = h.name || '';
+        document.getElementById('ho-phone').value = h.phone || '';
+        document.getElementById('ho-address').value = h.address || '';
+        document.getElementById('ho-neighborhood').value = h.neighborhood || '';
+        document.getElementById('ho-capacity').value = h.capacity || '';
+        document.getElementById('ho-rooms').value = h.rooms || '';
+        document.getElementById('ho-obs').value = h.obs || '';
+    } else {
+        document.getElementById('hostModalTitle').textContent = 'Nueva Casa de Hospedaje';
+        ['ho-name','ho-phone','ho-address','ho-neighborhood','ho-capacity','ho-rooms','ho-obs'].forEach(i => document.getElementById(i).value = '');
+    }
+    document.getElementById('hostModal').style.display = 'flex';
+}
+function closeHostModal() { document.getElementById('hostModal').style.display = 'none'; }
+
+function saveHost() {
+    const name = document.getElementById('ho-name').value.trim();
+    const capacity = parseInt(document.getElementById('ho-capacity').value);
+    if (!name || !capacity) { showToast('El nombre y la capacidad son requeridos', 'error'); return; }
+
+    const host = {
+        id: editingHostId || 'ho-' + Date.now(),
+        name, capacity,
+        phone: document.getElementById('ho-phone').value.trim(),
+        address: document.getElementById('ho-address').value.trim(),
+        neighborhood: document.getElementById('ho-neighborhood').value.trim(),
+        rooms: parseInt(document.getElementById('ho-rooms').value) || 0,
+        obs: document.getElementById('ho-obs').value.trim(),
+        occupants: []
+    };
+
+    const { hosts } = loadLogistics();
+    if (editingHostId) {
+        const idx = hosts.findIndex(h => h.id === editingHostId);
+        if (idx > -1) { host.occupants = hosts[idx].occupants || []; hosts[idx] = host; }
+    } else {
+        hosts.push(host);
+    }
+    saveHosts(hosts);
+    closeHostModal();
+    renderHosts();
+    updateLogisticsStats();
+    showToast(editingHostId ? 'Casa actualizada correctamente' : 'Casa de hospedaje registrada', 'success');
+}
+
+function toggleFilter(type) {
+    const btnMap = { avail: 'filter-avail', full: 'filter-full', 'trans-avail': 'filter-trans-avail', 'trans-full': 'filter-trans-full' };
+    const btn = document.getElementById(btnMap[type]);
+    if (activeHostFilter === type) {
+        activeHostFilter = null;
+        btn.classList.remove('active');
+    } else {
+        if (activeHostFilter) document.getElementById(btnMap[activeHostFilter])?.classList.remove('active');
+        activeHostFilter = type;
+        btn.classList.add('active');
+    }
+    if (type.startsWith('trans')) renderDrivers(); else renderHosts();
+}
+
+function renderHosts() {
+    const { hosts } = loadLogistics();
+    const q = (document.getElementById('searchHost')?.value || '').toLowerCase();
+    let filtered = hosts.filter(h =>
+        h.name.toLowerCase().includes(q) ||
+        (h.address||'').toLowerCase().includes(q) ||
+        (h.neighborhood||'').toLowerCase().includes(q)
+    );
+    if (activeHostFilter === 'avail') filtered = filtered.filter(h => (h.capacity - (h.occupants||[]).length) > 0);
+    if (activeHostFilter === 'full') filtered = filtered.filter(h => (h.capacity - (h.occupants||[]).length) <= 0);
+
+    const { churches } = loadLogistics();
+    const allPersons = getAllVisitors();
+    const container = document.getElementById('hostsList');
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-home"></i><p>No se encontraron casas de hospedaje</p></div>`;
+        return;
+    }
+    container.innerHTML = filtered.map(h => {
+        const occupied = (h.occupants||[]).length;
+        const avail = h.capacity - occupied;
+        const pct = Math.round((occupied / h.capacity) * 100);
+        const fillClass = pct >= 100 ? 'fill-red' : pct >= 70 ? 'fill-yellow' : 'fill-green';
+        const badgeClass = pct >= 100 ? 'badge-full' : pct >= 70 ? 'badge-mid' : 'badge-avail';
+        const badgeLabel = pct >= 100 ? 'Lleno' : pct >= 70 ? 'Casi Lleno' : 'Disponible';
+        const occupantNames = (h.occupants||[]).map(oid => {
+            const p = allPersons.find(x => x.id === oid);
+            return p ? `<div class="passenger-item"><i class="fas fa-user"></i>${p.name} <small style="color:var(--sage);">${p.churchName}</small></div>` : '';
+        }).join('');
+        return `
+        <div class="host-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-home"></i> ${h.name}</h3>
+                    <div class="card-meta">${h.neighborhood ? h.neighborhood + ' · ' : ''}${h.rooms ? h.rooms + ' hab.' : ''}</div>
+                </div>
+                <div class="card-actions">
+                    <button class="card-btn" onclick="openAssignHostModal('${h.id}')"><i class="fas fa-user-plus"></i></button>
+                    <button class="card-btn" onclick="openHostModal('${h.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="card-btn danger" onclick="confirmDeleteItem('host','${h.id}','${h.name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-row">
+                    <span class="key">Capacidad</span>
+                    <span class="val"><span class="badge-small ${badgeClass}">${badgeLabel}</span></span>
+                </div>
+                <div class="occupancy-bar-wrap">
+                    <div class="occupancy-label">
+                        <span><i class="fas fa-user-check"></i> Ocupadas: ${occupied}</span>
+                        <span><i class="fas fa-door-open"></i> Disponibles: ${avail}</span>
+                    </div>
+                    <div class="occupancy-bar"><div class="occupancy-fill ${fillClass}" style="width:${Math.min(pct,100)}%"></div></div>
+                    <div style="text-align:right;font-size:0.8rem;color:var(--sage);margin-top:2px;">${occupied} / ${h.capacity}</div>
+                </div>
+                ${h.phone ? `<div class="card-row"><span class="key"><i class="fas fa-phone"></i></span><span class="val">${h.phone}</span></div>` : ''}
+                ${h.address ? `<div class="card-row"><span class="key"><i class="fas fa-map-marker-alt"></i></span><span class="val">${h.address}</span></div>` : ''}
+                ${occupied > 0 ? `<div style="margin-top:0.75rem;border-top:1px dashed var(--beige);padding-top:0.75rem;"><div style="font-size:0.9rem;font-weight:600;color:var(--sage);margin-bottom:0.4rem;">Huéspedes:</div>${occupantNames}</div>` : ''}
+                ${h.obs ? `<div style="font-size:0.85rem;color:var(--sage);font-style:italic;margin-top:0.5rem;">${h.obs}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Assign host occupants
+function openAssignHostModal(hostId) {
+    assigningHostId = hostId;
+    const { hosts } = loadLogistics();
+    const h = hosts.find(x => x.id === hostId);
+    document.getElementById('assignHostName').textContent = h ? h.name : '';
+    document.getElementById('assign-search').value = '';
+    renderAssignList();
+    document.getElementById('assignHostModal').style.display = 'flex';
+}
+function closeAssignHostModal() { document.getElementById('assignHostModal').style.display = 'none'; }
+
+function renderAssignList() {
+    const q = (document.getElementById('assign-search')?.value || '').toLowerCase();
+    const visitors = getAllVisitors().filter(p =>
+        p.name.toLowerCase().includes(q) || p.churchName.toLowerCase().includes(q)
+    );
+    const { hosts } = loadLogistics();
+    const h = hosts.find(x => x.id === assigningHostId);
+    const occupants = h ? (h.occupants || []) : [];
+    const container = document.getElementById('assignList');
+    if (visitors.length === 0) {
+        container.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--sage);font-style:italic;">No hay visitantes registrados</div>`;
+        return;
+    }
+    container.innerHTML = visitors.map(p => `
+        <label style="display:flex;align-items:center;gap:0.75rem;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--beige);font-family:'Cormorant Garamond',serif;font-size:1rem;">
+            <input type="checkbox" ${occupants.includes(p.id)?'checked':''} value="${p.id}" style="accent-color:var(--sage);width:18px;height:18px;">
+            <span><strong>${p.name}</strong> <small style="color:var(--sage);">${p.churchName}</small></span>
+        </label>
+    `).join('');
+}
+
+function saveHostAssignments() {
+    const selected = Array.from(document.querySelectorAll('#assignList input[type=checkbox]:checked')).map(cb => cb.value);
+    const { hosts } = loadLogistics();
+    const idx = hosts.findIndex(h => h.id === assigningHostId);
+    if (idx > -1) {
+        hosts[idx].occupants = selected;
+        saveHosts(hosts);
+    }
+    closeAssignHostModal();
+    renderHosts();
+    updateLogisticsStats();
+    showToast('Asignaciones de hospedaje guardadas', 'success');
+}
+
+// ====================================================
+// DRIVERS
+// ====================================================
+let editingDriverId = null;
+let driverPassengers = [];
+
+function openDriverModal(id = null) {
+    editingDriverId = id;
+    driverPassengers = [];
+    document.getElementById('dr-search-passenger').value = '';
+    document.getElementById('dr-passenger-results').innerHTML = '';
+    document.getElementById('dr-passengers-selected').innerHTML = '';
+    if (id) {
+        const { drivers } = loadLogistics();
+        const d = drivers.find(x => x.id === id);
+        if (!d) return;
+        document.getElementById('driverModalTitle').textContent = 'Editar Conductor';
+        document.getElementById('dr-name').value = d.name || '';
+        document.getElementById('dr-phone').value = d.phone || '';
+        document.getElementById('dr-vehicle').value = d.vehicle || '';
+        document.getElementById('dr-plate').value = d.plate || '';
+        document.getElementById('dr-capacity').value = d.capacity || '';
+        driverPassengers = [...(d.passengers || [])];
+        renderSelectedPassengers();
+    } else {
+        document.getElementById('driverModalTitle').textContent = 'Nuevo Conductor';
+        ['dr-name','dr-phone','dr-vehicle','dr-plate','dr-capacity'].forEach(i => document.getElementById(i).value = '');
+    }
+    document.getElementById('driverModal').style.display = 'flex';
+}
+function closeDriverModal() { document.getElementById('driverModal').style.display = 'none'; }
+
+function searchPassengers() {
+    const q = document.getElementById('dr-search-passenger').value.toLowerCase();
+    if (!q) { document.getElementById('dr-passenger-results').innerHTML = ''; return; }
+    const visitors = getAllVisitors().filter(p =>
+        (p.name.toLowerCase().includes(q) || p.churchName.toLowerCase().includes(q)) &&
+        !driverPassengers.includes(p.id)
+    );
+    const container = document.getElementById('dr-passenger-results');
+    if (visitors.length === 0) {
+        container.innerHTML = `<div style="padding:0.75rem;text-align:center;color:var(--sage);font-style:italic;">No se encontraron personas</div>`;
+        return;
+    }
+    container.innerHTML = visitors.map(p => `
+        <div onclick="addPassenger('${p.id}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--beige);font-family:'Cormorant Garamond',serif;font-size:1rem;transition:background 0.2s;" onmouseover="this.style.background='var(--antique)'" onmouseout="this.style.background=''">
+            <strong>${p.name}</strong> <small style="color:var(--sage);">${p.churchName}</small>
+        </div>
+    `).join('');
+}
+
+function addPassenger(pid) {
+    if (!driverPassengers.includes(pid)) {
+        driverPassengers.push(pid);
+        renderSelectedPassengers();
+        document.getElementById('dr-search-passenger').value = '';
+        document.getElementById('dr-passenger-results').innerHTML = '';
+    }
+}
+function removePassenger(pid) {
+    driverPassengers = driverPassengers.filter(p => p !== pid);
+    renderSelectedPassengers();
+}
+function renderSelectedPassengers() {
+    const visitors = getAllVisitors();
+    document.getElementById('dr-passengers-selected').innerHTML = driverPassengers.map(pid => {
+        const p = visitors.find(x => x.id === pid);
+        if (!p) return '';
+        return `<span style="display:inline-flex;align-items:center;gap:0.3rem;background:var(--sage);color:white;padding:4px 10px;border-radius:15px;font-size:0.88rem;font-family:'Cormorant Garamond',serif;">
+            ${p.name} <i class="fas fa-times" onclick="removePassenger('${pid}')" style="cursor:pointer;opacity:0.7;"></i>
+        </span>`;
+    }).join('');
+}
+
+function saveDriver() {
+    const name = document.getElementById('dr-name').value.trim();
+    const vehicle = document.getElementById('dr-vehicle').value.trim();
+    const capacity = parseInt(document.getElementById('dr-capacity').value);
+    if (!name || !vehicle || !capacity) { showToast('Nombre, vehículo y capacidad son requeridos', 'error'); return; }
+
+    const driver = {
+        id: editingDriverId || 'dr-' + Date.now(),
+        name, vehicle, capacity,
+        phone: document.getElementById('dr-phone').value.trim(),
+        plate: document.getElementById('dr-plate').value.trim(),
+        passengers: [...driverPassengers]
+    };
+
+    const { drivers } = loadLogistics();
+    if (editingDriverId) {
+        const idx = drivers.findIndex(d => d.id === editingDriverId);
+        if (idx > -1) drivers[idx] = driver;
+    } else {
+        drivers.push(driver);
+    }
+    saveDrivers(drivers);
+    closeDriverModal();
+    renderDrivers();
+    updateLogisticsStats();
+    showToast(editingDriverId ? 'Conductor actualizado' : 'Conductor registrado correctamente', 'success');
+}
+
+function renderDrivers() {
+    const { drivers } = loadLogistics();
+    const q = (document.getElementById('searchDriver')?.value || '').toLowerCase();
+    let filtered = drivers.filter(d =>
+        d.name.toLowerCase().includes(q) ||
+        d.vehicle.toLowerCase().includes(q) ||
+        (d.plate||'').toLowerCase().includes(q)
+    );
+    if (activeHostFilter === 'trans-avail') filtered = filtered.filter(d => (d.capacity - (d.passengers||[]).length) > 0);
+    if (activeHostFilter === 'trans-full') filtered = filtered.filter(d => (d.capacity - (d.passengers||[]).length) <= 0);
+
+    const allVisitors = getAllVisitors();
+    const container = document.getElementById('driversList');
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-car"></i><p>No se encontraron conductores</p></div>`;
+        return;
+    }
+    container.innerHTML = filtered.map(d => {
+        const passengerCount = (d.passengers||[]).length;
+        const avail = d.capacity - passengerCount;
+        const pct = Math.round((passengerCount / d.capacity) * 100);
+        const fillClass = pct >= 100 ? 'fill-red' : pct >= 70 ? 'fill-yellow' : 'fill-green';
+        const badgeClass = pct >= 100 ? 'badge-full' : pct >= 70 ? 'badge-mid' : 'badge-avail';
+        const badgeLabel = pct >= 100 ? 'Lleno' : pct >= 70 ? 'Casi Lleno' : 'Disponible';
+        const passengerNames = (d.passengers||[]).map(pid => {
+            const p = allVisitors.find(x => x.id === pid);
+            return p ? `<div class="passenger-item"><i class="fas fa-user"></i>${p.name} <small style="color:var(--sage);">${p.churchName}</small></div>` : '';
+        }).join('');
+        return `
+        <div class="driver-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-car"></i> ${d.name}</h3>
+                    <div class="card-meta">${d.vehicle}${d.plate ? ' · ' + d.plate : ''}</div>
+                </div>
+                <div class="card-actions">
+                    <button class="card-btn" onclick="openDriverModal('${d.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="card-btn danger" onclick="confirmDeleteItem('driver','${d.id}','${d.name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-row">
+                    <span class="key">Capacidad</span>
+                    <span class="val"><span class="badge-small ${badgeClass}">${badgeLabel}</span></span>
+                </div>
+                <div class="occupancy-bar-wrap">
+                    <div class="occupancy-label">
+                        <span><i class="fas fa-user"></i> Pasajeros: ${passengerCount}</span>
+                        <span><i class="fas fa-chair"></i> Libres: ${avail}</span>
+                    </div>
+                    <div class="occupancy-bar"><div class="occupancy-fill ${fillClass}" style="width:${Math.min(pct,100)}%"></div></div>
+                    <div style="text-align:right;font-size:0.8rem;color:var(--sage);margin-top:2px;">${passengerCount} / ${d.capacity}</div>
+                </div>
+                ${d.phone ? `<div class="card-row"><span class="key"><i class="fas fa-phone"></i></span><span class="val">${d.phone}</span></div>` : ''}
+                ${passengerCount > 0 ? `<div style="margin-top:0.75rem;border-top:1px dashed var(--beige);padding-top:0.75rem;"><div style="font-size:0.9rem;font-weight:600;color:var(--sage);margin-bottom:0.4rem;">Pasajeros asignados:</div>${passengerNames}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ====================================================
+// DELETE CONFIRM
+// ====================================================
+let deleteAction = null;
+function confirmDeleteItem(type, id, label) {
+    document.getElementById('deleteMsg').textContent = `¿Desea eliminar "${label}"? Esta acción no se puede deshacer.`;
+    deleteAction = { type, id };
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+function cancelDelete() { document.getElementById('deleteModal').style.display = 'none'; deleteAction = null; }
+function confirmDelete() {
+    if (!deleteAction) return;
+    const { type, id } = deleteAction;
+    if (type === 'church') {
+        const { churches } = loadLogistics();
+        saveChurches(churches.filter(c => c.id !== id));
+        renderChurches();
+    } else if (type === 'host') {
+        const { hosts } = loadLogistics();
+        saveHosts(hosts.filter(h => h.id !== id));
+        renderHosts();
+    } else if (type === 'driver') {
+        const { drivers } = loadLogistics();
+        saveDrivers(drivers.filter(d => d.id !== id));
+        renderDrivers();
+    }
+    updateLogisticsStats();
+    cancelDelete();
+    showToast('Registro eliminado correctamente', 'success');
+}
+
+// ====================================================
+// TOAST
+// ====================================================
+function showToast(msg, type = 'success') {
+    const icons = { success: 'fas fa-check-circle', error: 'fas fa-times-circle', warning: 'fas fa-exclamation-triangle' };
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="${icons[type]||icons.success}"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+// ====================================================
+// EXPORT LOGISTICS PDF
+// ====================================================
+function exportLogisticsPDF() {
+    const { churches, hosts, drivers } = loadLogistics();
+    if (churches.length === 0 && hosts.length === 0 && drivers.length === 0) {
+        showToast('No hay datos de logística para exportar', 'warning'); return;
+    }
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const sage = [93,102,88], cream = [247,230,202], beige = [244,228,217], dark = [61,68,57];
+    let y = 0;
+
+    function header() {
+        pdf.setFillColor(...sage);
+        pdf.rect(0, 0, 210, 40, 'F');
+        pdf.setTextColor(255,255,255);
+        pdf.setFontSize(22);
+        pdf.text('PROTOCOLO EBENEZER HONDURAS', 105, 18, { align: 'center' });
+        pdf.setFontSize(12);
+        pdf.text('Reporte de Logística · ' + new Date().toLocaleDateString('es-HN'), 105, 30, { align: 'center' });
+        y = 50;
+    }
+
+    function sectionTitle(title) {
+        if (y > 260) { pdf.addPage(); y = 20; }
+        pdf.setFillColor(...beige);
+        pdf.rect(14, y, 182, 10, 'F');
+        pdf.setTextColor(...sage);
+        pdf.setFontSize(13);
+        pdf.text(title, 18, y + 7);
+        y += 16;
+    }
+
+    function row(left, right) {
+        if (y > 280) { pdf.addPage(); y = 20; }
+        pdf.setTextColor(...dark);
+        pdf.setFontSize(10);
+        pdf.text(left, 18, y);
+        if (right) pdf.text(right, 120, y);
+        y += 7;
+    }
+
+    header();
+    // Stats
+    sectionTitle('Resumen General');
+    row('Iglesias invitadas: ' + churches.length, 'Conductores: ' + drivers.length);
+    const totalV = churches.reduce((s,c)=>s+(c.congregants||[]).length, 0);
+    row('Total visitantes: ' + totalV, 'Casas de hospedaje: ' + hosts.length);
+    y += 5;
+
+    // Churches
+    if (churches.length > 0) {
+        sectionTitle('Iglesias Visitantes');
+        churches.forEach((c, i) => {
+            if (y > 265) { pdf.addPage(); y = 20; }
+            pdf.setTextColor(...sage); pdf.setFontSize(11);
+            pdf.text(`${i+1}. ${c.name} - ${c.city}`, 18, y); y += 6;
+            pdf.setTextColor(...dark); pdf.setFontSize(10);
+            pdf.text(`Pastor: ${c.pastor}${c.wife?' · Esposa: '+c.wife:''}`, 22, y); y += 5;
+            if (c.date) { pdf.text(`Llegada: ${c.date}${c.time?' a las '+c.time:''}`, 22, y); y += 5; }
+            (c.congregants||[]).forEach(p => {
+                if (y > 280) { pdf.addPage(); y = 20; }
+                pdf.text(`  - ${p.name}${p.host?' → '+p.host:''}`, 24, y); y += 5;
+            });
+            y += 3;
+        });
+    }
+
+    // Hospedaje
+    if (hosts.length > 0) {
+        sectionTitle('Casas de Hospedaje');
+        const allV = getAllVisitors();
+        hosts.forEach((h, i) => {
+            if (y > 265) { pdf.addPage(); y = 20; }
+            pdf.setTextColor(...sage); pdf.setFontSize(11);
+            const occ = (h.occupants||[]).length;
+            pdf.text(`${i+1}. ${h.name} — Capacidad: ${occ}/${h.capacity}`, 18, y); y += 6;
+            pdf.setTextColor(...dark); pdf.setFontSize(10);
+            if (h.address) { pdf.text(`Dirección: ${h.address}`, 22, y); y += 5; }
+            (h.occupants||[]).forEach(oid => {
+                const p = allV.find(x=>x.id===oid);
+                if (p) { if (y>280) {pdf.addPage();y=20;} pdf.text(`  - ${p.name}`, 24, y); y += 5; }
+            });
+            y += 3;
+        });
+    }
+
+    // Transporte
+    if (drivers.length > 0) {
+        sectionTitle('Listado de Transporte');
+        const allV = getAllVisitors();
+        drivers.forEach((d, i) => {
+            if (y > 265) { pdf.addPage(); y = 20; }
+            pdf.setTextColor(...sage); pdf.setFontSize(11);
+            const pc = (d.passengers||[]).length;
+            pdf.text(`${i+1}. ${d.name} — ${d.vehicle}${d.plate?' ('+d.plate+')':''} — ${pc}/${d.capacity}`, 18, y); y += 6;
+            pdf.setTextColor(...dark); pdf.setFontSize(10);
+            (d.passengers||[]).forEach(pid => {
+                const p = allV.find(x=>x.id===pid);
+                if (p) { if (y>280) {pdf.addPage();y=20;} pdf.text(`  - ${p.name}`, 24, y); y += 5; }
+            });
+            y += 3;
+        });
+    }
+
+    pdf.save(`Logistica_Protocolo_${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('PDF de logística generado correctamente', 'success');
+}
+
+// ====================================================
+// EXPORT LOGISTICS CSV/EXCEL
+// ====================================================
+function exportLogisticsCSV() {
+    const { churches, hosts, drivers } = loadLogistics();
+    if (churches.length === 0 && hosts.length === 0 && drivers.length === 0) {
+        showToast('No hay datos de logística para exportar', 'warning'); return;
+    }
+    const allV = getAllVisitors();
+    let csv = '\uFEFF'; // BOM for Excel
+
+    csv += 'IGLESIAS VISITANTES\n';
+    csv += 'Iglesia,Ciudad,Pastor,Esposa,Fecha Llegada,Hora,Observaciones\n';
+    churches.forEach(c => {
+        csv += `"${c.name}","${c.city}","${c.pastor}","${c.wife||''}","${c.date||''}","${c.time||''}","${c.obs||''}"\n`;
+    });
+
+    csv += '\nCONGREGANTES\n';
+    csv += 'Nombre,Edad,Sexo,Teléfono,Iglesia,Hospedaje Asignado\n';
+    churches.forEach(c => {
+        (c.congregants||[]).forEach(p => {
+            csv += `"${p.name}","${p.age||''}","${p.sex||''}","${p.phone||''}","${c.name}","${p.host||''}"\n`;
+        });
+    });
+
+    csv += '\nHOSPEDAJE\n';
+    csv += 'Familia/Anfitrión,Teléfono,Dirección,Barrio,Capacidad,Ocupados,Disponibles\n';
+    hosts.forEach(h => {
+        const occ = (h.occupants||[]).length;
+        csv += `"${h.name}","${h.phone||''}","${h.address||''}","${h.neighborhood||''}","${h.capacity}","${occ}","${h.capacity-occ}"\n`;
+    });
+
+    csv += '\nTRANSPORTE\n';
+    csv += 'Conductor,Teléfono,Vehículo,Placa,Capacidad,Pasajeros Asignados\n';
+    drivers.forEach(d => {
+        const pnames = (d.passengers||[]).map(pid=>{const p=allV.find(x=>x.id===pid);return p?p.name:'';}).filter(Boolean).join(' | ');
+        csv += `"${d.name}","${d.phone||''}","${d.vehicle}","${d.plate||''}","${d.capacity}","${pnames}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Logistica_Protocolo_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Excel CSV generado correctamente', 'success');
+}
+</script>
+</body>
+</html>
