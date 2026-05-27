@@ -427,12 +427,46 @@
                 <input type="password" id="password" required placeholder="Ingrese su contraseña">
             </div>
             <button type="submit" class="btn-vintage">
-                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                <i class="fas fa-sign-in-alt"></i> Iniciar Sesion
             </button>
         </form>
         <p style="margin-top:1.5rem;font-size:0.9rem;color:var(--sage);opacity:0.7;">
             <i class="fas fa-shield-alt"></i> Acceso seguro y confidencial
         </p>
+    </div>
+</div>
+
+<!-- ===================== EVENT CONFIG SCREEN ===================== -->
+<div class="login-container" id="eventConfigScreen" style="display:none;">
+    <div class="login-box" style="max-width:500px;">
+        <img src="/logo.png" alt="Protocolo Ebenezer Honduras" style="width:180px;height:auto;margin:0 auto 0.5rem;display:block;">
+        <h2 style="font-family:'Playfair Display',serif;color:var(--sage);font-size:1.8rem;margin-bottom:0.25rem;">Configuracion del Evento</h2>
+        <p class="subtitle" style="margin-bottom:1.5rem;">Complete la informacion antes de iniciar</p>
+        <div class="decorative-line"></div>
+        <form id="eventConfigForm">
+            <div class="input-group">
+                <label><i class="fas fa-calendar-alt"></i> Nombre del Evento *</label>
+                <input type="text" id="eventName" required placeholder="Ej: Culto Dominical, Retiro de Jovenes, etc.">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-map-marker-alt"></i> Ubicacion del Equipo *</label>
+                <input type="text" id="eventLocation" required placeholder="Ej: Templo Central, Salon A, Entrada Principal">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-calendar"></i> Fecha del Evento</label>
+                <input type="date" id="eventDate" style="font-family:inherit;">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-sticky-note"></i> Notas Adicionales (Opcional)</label>
+                <textarea id="eventNotes" placeholder="Observaciones o instrucciones especiales..." style="width:100%;padding:0.875rem 1rem;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;resize:vertical;min-height:60px;"></textarea>
+            </div>
+            <button type="submit" class="btn-vintage" style="margin-top:0.5rem;">
+                <i class="fas fa-arrow-right"></i> Continuar a Registro
+            </button>
+        </form>
+        <button onclick="backToLogin()" style="margin-top:1rem;background:none;border:none;color:var(--sage);cursor:pointer;font-size:0.9rem;font-family:inherit;">
+            <i class="fas fa-arrow-left"></i> Volver al Login
+        </button>
     </div>
 </div>
 
@@ -456,6 +490,27 @@
             </button>
         </div>
     </header>
+
+    <!-- EVENT INFO BAR -->
+    <div id="eventInfoBar" style="background:linear-gradient(135deg,var(--sage) 0%,#4a5548 100%);color:white;padding:0.75rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+        <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <i class="fas fa-calendar-alt"></i>
+                <span><strong>Evento:</strong> <span id="displayEventName">-</span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <i class="fas fa-map-marker-alt"></i>
+                <span><strong>Ubicacion:</strong> <span id="displayEventLocation">-</span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <i class="fas fa-calendar"></i>
+                <span><strong>Fecha:</strong> <span id="displayEventDate">-</span></span>
+            </div>
+        </div>
+        <button onclick="editEventConfig()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:0.4rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            <i class="fas fa-edit"></i> Editar
+        </button>
+    </div>
 
     <!-- MODULE NAV -->
     <div class="module-nav">
@@ -980,6 +1035,7 @@ const membersDatabase = {
 
 let attendanceRecords = [];
 let currentUser = null;
+let currentEvent = { name: '', location: '', date: '', notes: '' };
 
 const VALID_CREDENTIALS = { 'admin': 'protocolo2024', 'usuario': 'ebenezer123' };
 
@@ -991,6 +1047,9 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+// ====================================================
+// LOGIN -> EVENT CONFIG -> MAIN APP FLOW
+// ====================================================
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -998,19 +1057,59 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     if (VALID_CREDENTIALS[username] && VALID_CREDENTIALS[username] === password) {
         currentUser = username;
         document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        document.getElementById('dniInput').focus();
+        document.getElementById('eventConfigScreen').style.display = 'flex';
+        document.getElementById('eventName').focus();
+        // Set default date to today
+        document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
     } else {
         showToast('Credenciales incorrectas. Por favor intente nuevamente.', 'error');
     }
 });
 
+document.getElementById('eventConfigForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    currentEvent.name = document.getElementById('eventName').value.trim();
+    currentEvent.location = document.getElementById('eventLocation').value.trim();
+    currentEvent.date = document.getElementById('eventDate').value;
+    currentEvent.notes = document.getElementById('eventNotes').value.trim();
+    
+    // Update display bar
+    document.getElementById('displayEventName').textContent = currentEvent.name;
+    document.getElementById('displayEventLocation').textContent = currentEvent.location;
+    document.getElementById('displayEventDate').textContent = currentEvent.date ? new Date(currentEvent.date + 'T12:00:00').toLocaleDateString('es-HN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('es-HN');
+    
+    document.getElementById('eventConfigScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('dniInput').focus();
+    showToast('Evento configurado correctamente', 'success');
+});
+
+function backToLogin() {
+    currentUser = null;
+    document.getElementById('eventConfigScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function editEventConfig() {
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('eventConfigScreen').style.display = 'flex';
+    document.getElementById('eventName').value = currentEvent.name;
+    document.getElementById('eventLocation').value = currentEvent.location;
+    document.getElementById('eventDate').value = currentEvent.date;
+    document.getElementById('eventNotes').value = currentEvent.notes;
+}
+
 function logout() { document.getElementById('logoutModal').style.display = 'flex'; }
 function confirmLogout() {
     currentUser = null;
+    currentEvent = { name: '', location: '', date: '', notes: '' };
     attendanceRecords = [];
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
+    document.getElementById('eventName').value = '';
+    document.getElementById('eventLocation').value = '';
+    document.getElementById('eventDate').value = '';
+    document.getElementById('eventNotes').value = '';
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('logoutModal').style.display = 'none';
@@ -1092,31 +1191,39 @@ function exportToPDF() {
     const pdf = new jsPDF();
     const colors = { sage: [93,102,88], cream: [247,230,202], beige: [244,228,217] };
     pdf.setFillColor(...colors.sage);
-    pdf.rect(0, 0, 210, 40, 'F');
+    pdf.rect(0, 0, 210, 50, 'F');
     pdf.setTextColor(255,255,255);
-    pdf.setFontSize(24);
-    pdf.text('PROTOCOLO EBENEZER HONDURAS', 105, 20, { align: 'center' });
-    pdf.setFontSize(12);
-    pdf.text('Registro de Servidores', 105, 30, { align: 'center' });
-    pdf.setTextColor(...colors.sage);
+    pdf.setFontSize(22);
+    pdf.text('PROTOCOLO EBENEZER HONDURAS', 105, 15, { align: 'center' });
     pdf.setFontSize(14);
-    pdf.text(`Fecha: ${new Date().toLocaleDateString('es-HN')}`, 14, 55);
-    pdf.text(`Total de Registros: ${attendanceRecords.length}`, 14, 63);
+    pdf.text(currentEvent.name || 'Registro de Servidores', 105, 26, { align: 'center' });
+    pdf.setFontSize(11);
+    pdf.text(`Ubicacion: ${currentEvent.location || '-'} | Fecha: ${currentEvent.date || new Date().toLocaleDateString('es-HN')}`, 105, 37, { align: 'center' });
+    if (currentEvent.notes) {
+        pdf.setFontSize(9);
+        pdf.text(`Notas: ${currentEvent.notes.substring(0, 80)}`, 105, 46, { align: 'center' });
+    }
+    pdf.setTextColor(...colors.sage);
+    pdf.setFontSize(12);
+    pdf.text(`Total de Registros: ${attendanceRecords.length}`, 14, 62);
+    pdf.text(`Generado: ${new Date().toLocaleString('es-HN')}`, 14, 70);
     pdf.setFillColor(...colors.beige);
-    pdf.rect(14, 70, 182, 10, 'F');
+    pdf.rect(14, 76, 182, 10, 'F');
     pdf.setTextColor(...colors.sage);
     pdf.setFontSize(11);
-    pdf.text('#', 18, 76); pdf.text('NOMBRE', 30, 76); pdf.text('EQUIPO', 120, 76); pdf.text('HORA', 160, 76);
+    pdf.text('#', 18, 82); pdf.text('NOMBRE', 30, 82); pdf.text('EQUIPO', 120, 82); pdf.text('HORA', 160, 82);
     pdf.setFontSize(10);
+    let yStart = 88;
     attendanceRecords.forEach((record, index) => {
-        const y = 82 + (index * 8);
-        if (y > 280) { pdf.addPage(); return; }
+        const y = yStart + (index * 8);
+        if (y > 280) { pdf.addPage(); yStart = 20 - (index * 8); return; }
         pdf.text(`${index+1}`, 18, y);
         pdf.text(record.name.substring(0, 40), 30, y);
         pdf.text(record.team, 120, y);
         pdf.text(record.time, 160, y);
     });
-    pdf.save(`Registro_Protocolo_${new Date().toISOString().split('T')[0]}.pdf`);
+    const filename = `Asistencia_${(currentEvent.name || 'Protocolo').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(filename);
 }
 
 // ====================================================
@@ -1138,20 +1245,31 @@ function exportToCSV() {
     if (attendanceRecords.length === 0) { showToast('No hay registros para exportar', 'warning'); return; }
     toggleExportMenu();
     
+    // Event info header
+    const eventInfo = [
+        ['PROTOCOLO EBENEZER HONDURAS'],
+        [`Evento: ${currentEvent.name || '-'}`],
+        [`Ubicacion: ${currentEvent.location || '-'}`],
+        [`Fecha del Evento: ${currentEvent.date || new Date().toLocaleDateString('es-HN')}`],
+        currentEvent.notes ? [`Notas: ${currentEvent.notes}`] : [],
+        [],
+    ].filter(r => r.length > 0);
+    
     const headers = ['#', 'Nombre', 'Equipo', 'Hora de Registro', 'Fecha'];
     const rows = attendanceRecords.map((r, i) => [
         i + 1,
         `"${r.name.replace(/"/g, '""')}"`,
         `"${r.team}"`,
         r.time,
-        new Date().toLocaleDateString('es-HN')
+        currentEvent.date || new Date().toLocaleDateString('es-HN')
     ]);
     
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csvContent = '\uFEFF' + [...eventInfo.map(r => r.join(',')), headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Asistencias_Protocolo_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `Asistencia_${(currentEvent.name || 'Protocolo').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
     showToast('Archivo CSV exportado correctamente', 'success');
@@ -1177,9 +1295,12 @@ function exportBarChart() {
     chartModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
     chartModal.innerHTML = `
         <div style="background:white;border-radius:16px;padding:2rem;max-width:800px;width:90%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
                 <h2 style="font-family:'Playfair Display',serif;color:#5D6658;margin:0;">Grafica de Asistencias por Equipo</h2>
                 <button onclick="closeChartModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#888;">&times;</button>
+            </div>
+            <div style="background:#f8f8f8;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.9rem;color:#666;">
+                <strong>${currentEvent.name || 'Evento'}</strong> | ${currentEvent.location || '-'} | ${currentEvent.date || new Date().toLocaleDateString('es-HN')}
             </div>
             <canvas id="attendanceChart" width="700" height="400"></canvas>
             <div style="display:flex;gap:1rem;margin-top:1.5rem;justify-content:center;">
@@ -1299,9 +1420,12 @@ function exportPivotTable() {
     pivotModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
     pivotModal.innerHTML = `
         <div style="background:white;border-radius:16px;padding:2rem;max-width:900px;width:95%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
                 <h2 style="font-family:'Playfair Display',serif;color:#5D6658;margin:0;">Tabla Dinamica - Asistencias por Equipo</h2>
                 <button onclick="closePivotModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#888;">&times;</button>
+            </div>
+            <div style="background:#f8f8f8;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.9rem;color:#666;">
+                <strong>${currentEvent.name || 'Evento'}</strong> | ${currentEvent.location || '-'} | ${currentEvent.date || new Date().toLocaleDateString('es-HN')}
             </div>
             <div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;">
                 <div style="background:#F4E4D9;padding:1rem 1.5rem;border-radius:10px;text-align:center;">
