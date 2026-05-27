@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --cream: #F7E6CA;
@@ -504,6 +505,22 @@
                 <button class="btn-export" onclick="exportToPDF()">
                     <i class="fas fa-file-pdf"></i> Exportar a PDF
                 </button>
+                <div class="export-dropdown" style="display:inline-block;position:relative;margin-left:0.5rem;">
+                    <button class="btn-export" onclick="toggleExportMenu()" style="background:var(--sage);">
+                        <i class="fas fa-file-excel"></i> Exportar Excel <i class="fas fa-caret-down" style="margin-left:0.3rem;"></i>
+                    </button>
+                    <div id="exportMenu" class="export-menu" style="display:none;position:absolute;bottom:100%;left:0;background:white;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);min-width:200px;z-index:100;overflow:hidden;margin-bottom:0.5rem;">
+                        <button onclick="exportToCSV()" style="display:flex;align-items:center;gap:0.75rem;width:100%;padding:0.875rem 1rem;border:none;background:white;cursor:pointer;font-family:inherit;font-size:0.95rem;color:var(--text-dark);transition:background 0.2s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
+                            <i class="fas fa-file-csv" style="color:var(--sage);width:20px;"></i> Archivo CSV
+                        </button>
+                        <button onclick="exportBarChart()" style="display:flex;align-items:center;gap:0.75rem;width:100%;padding:0.875rem 1rem;border:none;background:white;cursor:pointer;font-family:inherit;font-size:0.95rem;color:var(--text-dark);transition:background 0.2s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
+                            <i class="fas fa-chart-bar" style="color:var(--sage);width:20px;"></i> Grafica de Barras
+                        </button>
+                        <button onclick="exportPivotTable()" style="display:flex;align-items:center;gap:0.75rem;width:100%;padding:0.875rem 1rem;border:none;background:white;cursor:pointer;font-family:inherit;font-size:0.95rem;color:var(--text-dark);transition:background 0.2s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
+                            <i class="fas fa-table" style="color:var(--sage);width:20px;"></i> Tabla Dinamica
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
