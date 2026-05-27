@@ -1119,6 +1119,372 @@ function exportToPDF() {
     pdf.save(`Registro_Protocolo_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
+// ====================================================
+// EXCEL/CSV EXPORT MENU & FUNCTIONS
+// ====================================================
+function toggleExportMenu() {
+    const menu = document.getElementById('exportMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('exportMenu');
+    const btn = e.target.closest('.export-dropdown');
+    if (!btn && menu) menu.style.display = 'none';
+});
+
+function exportToCSV() {
+    if (attendanceRecords.length === 0) { showToast('No hay registros para exportar', 'warning'); return; }
+    toggleExportMenu();
+    
+    const headers = ['#', 'Nombre', 'Equipo', 'Hora de Registro', 'Fecha'];
+    const rows = attendanceRecords.map((r, i) => [
+        i + 1,
+        `"${r.name.replace(/"/g, '""')}"`,
+        `"${r.team}"`,
+        r.time,
+        new Date().toLocaleDateString('es-HN')
+    ]);
+    
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Asistencias_Protocolo_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('Archivo CSV exportado correctamente', 'success');
+}
+
+function exportBarChart() {
+    if (attendanceRecords.length === 0) { showToast('No hay registros para exportar', 'warning'); return; }
+    toggleExportMenu();
+    
+    // Count by team
+    const teamCounts = {};
+    attendanceRecords.forEach(r => {
+        teamCounts[r.team] = (teamCounts[r.team] || 0) + 1;
+    });
+    
+    const labels = Object.keys(teamCounts);
+    const data = Object.values(teamCounts);
+    const colors = ['#5D6658', '#8B9A7D', '#A8B89A', '#C4D4B6', '#D4E4C6', '#6B8E5A', '#7D9E6C', '#9EBE8E', '#BED9AE', '#DFF4CE'];
+    
+    // Create modal for chart
+    const chartModal = document.createElement('div');
+    chartModal.id = 'chartModal';
+    chartModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
+    chartModal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:2rem;max-width:800px;width:90%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h2 style="font-family:'Playfair Display',serif;color:#5D6658;margin:0;">Grafica de Asistencias por Equipo</h2>
+                <button onclick="closeChartModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#888;">&times;</button>
+            </div>
+            <canvas id="attendanceChart" width="700" height="400"></canvas>
+            <div style="display:flex;gap:1rem;margin-top:1.5rem;justify-content:center;">
+                <button onclick="downloadChart()" class="btn-export" style="background:#5D6658;">
+                    <i class="fas fa-download"></i> Descargar Imagen
+                </button>
+                <button onclick="downloadChartPDF()" class="btn-export" style="background:#8B4513;">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(chartModal);
+    
+    // Create chart
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    window.attendanceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cantidad de Servidores',
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderColor: '#5D6658',
+                borderWidth: 1,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: `Total: ${attendanceRecords.length} servidores - ${new Date().toLocaleDateString('es-HN')}`,
+                    font: { size: 14, family: 'Cormorant Garamond' },
+                    color: '#5D6658'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, color: '#5D6658' },
+                    grid: { color: 'rgba(93,102,88,0.1)' }
+                },
+                x: {
+                    ticks: { color: '#5D6658', font: { size: 11 } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function closeChartModal() {
+    const modal = document.getElementById('chartModal');
+    if (modal) {
+        if (window.attendanceChartInstance) {
+            window.attendanceChartInstance.destroy();
+            window.attendanceChartInstance = null;
+        }
+        modal.remove();
+    }
+}
+
+function downloadChart() {
+    const canvas = document.getElementById('attendanceChart');
+    const link = document.createElement('a');
+    link.download = `Grafica_Asistencias_${new Date().toISOString().split('T')[0]}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Grafica descargada como imagen', 'success');
+}
+
+function downloadChartPDF() {
+    const canvas = document.getElementById('attendanceChart');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('landscape');
+    
+    pdf.setFillColor(93, 102, 88);
+    pdf.rect(0, 0, 297, 30, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(20);
+    pdf.text('PROTOCOLO EBENEZER HONDURAS', 148.5, 15, { align: 'center' });
+    pdf.setFontSize(12);
+    pdf.text('Grafica de Asistencias por Equipo', 148.5, 23, { align: 'center' });
+    
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 20, 40, 257, 150);
+    
+    pdf.setTextColor(93, 102, 88);
+    pdf.setFontSize(10);
+    pdf.text(`Generado: ${new Date().toLocaleString('es-HN')}`, 148.5, 200, { align: 'center' });
+    
+    pdf.save(`Grafica_Asistencias_${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('Grafica exportada como PDF', 'success');
+}
+
+function exportPivotTable() {
+    if (attendanceRecords.length === 0) { showToast('No hay registros para exportar', 'warning'); return; }
+    toggleExportMenu();
+    
+    // Group by team
+    const teamData = {};
+    attendanceRecords.forEach(r => {
+        if (!teamData[r.team]) teamData[r.team] = [];
+        teamData[r.team].push(r);
+    });
+    
+    // Sort teams by count (descending)
+    const sortedTeams = Object.entries(teamData).sort((a, b) => b[1].length - a[1].length);
+    
+    // Create modal for pivot table
+    const pivotModal = document.createElement('div');
+    pivotModal.id = 'pivotModal';
+    pivotModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
+    pivotModal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:2rem;max-width:900px;width:95%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h2 style="font-family:'Playfair Display',serif;color:#5D6658;margin:0;">Tabla Dinamica - Asistencias por Equipo</h2>
+                <button onclick="closePivotModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#888;">&times;</button>
+            </div>
+            <div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;">
+                <div style="background:#F4E4D9;padding:1rem 1.5rem;border-radius:10px;text-align:center;">
+                    <div style="font-size:2rem;font-weight:bold;color:#5D6658;">${attendanceRecords.length}</div>
+                    <div style="color:#666;font-size:0.9rem;">Total Servidores</div>
+                </div>
+                <div style="background:#F7E6CA;padding:1rem 1.5rem;border-radius:10px;text-align:center;">
+                    <div style="font-size:2rem;font-weight:bold;color:#5D6658;">${sortedTeams.length}</div>
+                    <div style="color:#666;font-size:0.9rem;">Equipos</div>
+                </div>
+                <div style="background:#E8F0E4;padding:1rem 1.5rem;border-radius:10px;text-align:center;">
+                    <div style="font-size:2rem;font-weight:bold;color:#5D6658;">${sortedTeams.length > 0 ? Math.round(attendanceRecords.length / sortedTeams.length) : 0}</div>
+                    <div style="color:#666;font-size:0.9rem;">Promedio por Equipo</div>
+                </div>
+            </div>
+            <div id="pivotTableContainer" style="max-height:400px;overflow:auto;border:1px solid #ddd;border-radius:10px;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+                    <thead style="position:sticky;top:0;background:#5D6658;color:white;">
+                        <tr>
+                            <th style="padding:12px 16px;text-align:left;cursor:pointer;" onclick="sortPivotTable('team')">Equipo <i class="fas fa-sort"></i></th>
+                            <th style="padding:12px 16px;text-align:center;cursor:pointer;" onclick="sortPivotTable('count')">Cantidad <i class="fas fa-sort"></i></th>
+                            <th style="padding:12px 16px;text-align:center;">% del Total</th>
+                            <th style="padding:12px 16px;text-align:left;">Miembros</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pivotTableBody">
+                        ${sortedTeams.map(([team, members], i) => `
+                            <tr style="background:${i % 2 === 0 ? '#fff' : '#f9f9f9'};border-bottom:1px solid #eee;">
+                                <td style="padding:12px 16px;font-weight:600;color:#5D6658;">${team}</td>
+                                <td style="padding:12px 16px;text-align:center;">
+                                    <span style="background:#5D6658;color:white;padding:4px 12px;border-radius:20px;font-weight:bold;">${members.length}</span>
+                                </td>
+                                <td style="padding:12px 16px;text-align:center;">
+                                    <div style="background:#eee;border-radius:10px;overflow:hidden;height:20px;position:relative;">
+                                        <div style="background:linear-gradient(90deg,#5D6658,#8B9A7D);height:100%;width:${(members.length / attendanceRecords.length * 100).toFixed(1)}%;"></div>
+                                        <span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:0.75rem;font-weight:bold;">${(members.length / attendanceRecords.length * 100).toFixed(1)}%</span>
+                                    </div>
+                                </td>
+                                <td style="padding:12px 16px;">
+                                    <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:300px;">
+                                        ${members.slice(0, 5).map(m => `<span style="background:#E8F0E4;padding:2px 8px;border-radius:12px;font-size:0.75rem;">${m.name.split(' ')[0]}</span>`).join('')}
+                                        ${members.length > 5 ? `<span style="background:#F4E4D9;padding:2px 8px;border-radius:12px;font-size:0.75rem;">+${members.length - 5} mas</span>` : ''}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:flex;gap:1rem;margin-top:1.5rem;justify-content:center;flex-wrap:wrap;">
+                <button onclick="downloadPivotCSV()" class="btn-export" style="background:#5D6658;">
+                    <i class="fas fa-file-csv"></i> Descargar CSV
+                </button>
+                <button onclick="downloadPivotPDF()" class="btn-export" style="background:#8B4513;">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+                <button onclick="downloadPivotExcel()" class="btn-export" style="background:#217346;">
+                    <i class="fas fa-file-excel"></i> Descargar Excel
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(pivotModal);
+}
+
+function closePivotModal() {
+    const modal = document.getElementById('pivotModal');
+    if (modal) modal.remove();
+}
+
+function downloadPivotCSV() {
+    const teamData = {};
+    attendanceRecords.forEach(r => {
+        if (!teamData[r.team]) teamData[r.team] = [];
+        teamData[r.team].push(r);
+    });
+    
+    const headers = ['Equipo', 'Cantidad', 'Porcentaje', 'Miembros'];
+    const rows = Object.entries(teamData).map(([team, members]) => [
+        `"${team}"`,
+        members.length,
+        `${(members.length / attendanceRecords.length * 100).toFixed(1)}%`,
+        `"${members.map(m => m.name).join(', ')}"`
+    ]);
+    
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `TablaDinamica_Protocolo_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('Tabla dinamica exportada como CSV', 'success');
+}
+
+function downloadPivotPDF() {
+    const teamData = {};
+    attendanceRecords.forEach(r => {
+        if (!teamData[r.team]) teamData[r.team] = [];
+        teamData[r.team].push(r);
+    });
+    const sortedTeams = Object.entries(teamData).sort((a, b) => b[1].length - a[1].length);
+    
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    
+    pdf.setFillColor(93, 102, 88);
+    pdf.rect(0, 0, 210, 35, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(20);
+    pdf.text('PROTOCOLO EBENEZER HONDURAS', 105, 15, { align: 'center' });
+    pdf.setFontSize(12);
+    pdf.text('Tabla Dinamica - Asistencias por Equipo', 105, 25, { align: 'center' });
+    
+    pdf.setTextColor(93, 102, 88);
+    pdf.setFontSize(12);
+    pdf.text(`Total Servidores: ${attendanceRecords.length}`, 14, 45);
+    pdf.text(`Total Equipos: ${sortedTeams.length}`, 14, 53);
+    pdf.text(`Fecha: ${new Date().toLocaleDateString('es-HN')}`, 14, 61);
+    
+    pdf.setFillColor(244, 228, 217);
+    pdf.rect(14, 68, 182, 10, 'F');
+    pdf.setFontSize(10);
+    pdf.setTextColor(93, 102, 88);
+    pdf.text('EQUIPO', 18, 74);
+    pdf.text('CANTIDAD', 100, 74);
+    pdf.text('PORCENTAJE', 140, 74);
+    
+    let y = 82;
+    sortedTeams.forEach(([team, members], i) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        pdf.setFillColor(i % 2 === 0 ? 255 : 249, i % 2 === 0 ? 255 : 249, i % 2 === 0 ? 255 : 249);
+        pdf.rect(14, y - 5, 182, 8, 'F');
+        pdf.text(team.substring(0, 35), 18, y);
+        pdf.text(String(members.length), 110, y);
+        pdf.text(`${(members.length / attendanceRecords.length * 100).toFixed(1)}%`, 150, y);
+        y += 8;
+    });
+    
+    pdf.save(`TablaDinamica_Protocolo_${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('Tabla dinamica exportada como PDF', 'success');
+}
+
+function downloadPivotExcel() {
+    const teamData = {};
+    attendanceRecords.forEach(r => {
+        if (!teamData[r.team]) teamData[r.team] = [];
+        teamData[r.team].push(r);
+    });
+    
+    // Create XML for Excel
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<?mso-application progid="Excel.Sheet"?>\n';
+    xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+    xml += '<Styles><Style ss:ID="Header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#5D6658" ss:Pattern="Solid"/></Style>';
+    xml += '<Style ss:ID="Percent"><NumberFormat ss:Format="0.0%"/></Style></Styles>\n';
+    
+    // Summary sheet
+    xml += '<Worksheet ss:Name="Resumen"><Table>\n';
+    xml += '<Row><Cell ss:StyleID="Header"><Data ss:Type="String">Equipo</Data></Cell><Cell ss:StyleID="Header"><Data ss:Type="String">Cantidad</Data></Cell><Cell ss:StyleID="Header"><Data ss:Type="String">Porcentaje</Data></Cell></Row>\n';
+    Object.entries(teamData).sort((a, b) => b[1].length - a[1].length).forEach(([team, members]) => {
+        xml += `<Row><Cell><Data ss:Type="String">${team}</Data></Cell><Cell><Data ss:Type="Number">${members.length}</Data></Cell><Cell ss:StyleID="Percent"><Data ss:Type="Number">${(members.length / attendanceRecords.length).toFixed(4)}</Data></Cell></Row>\n`;
+    });
+    xml += '</Table></Worksheet>\n';
+    
+    // Detail sheet
+    xml += '<Worksheet ss:Name="Detalle"><Table>\n';
+    xml += '<Row><Cell ss:StyleID="Header"><Data ss:Type="String">#</Data></Cell><Cell ss:StyleID="Header"><Data ss:Type="String">Nombre</Data></Cell><Cell ss:StyleID="Header"><Data ss:Type="String">Equipo</Data></Cell><Cell ss:StyleID="Header"><Data ss:Type="String">Hora</Data></Cell></Row>\n';
+    attendanceRecords.forEach((r, i) => {
+        xml += `<Row><Cell><Data ss:Type="Number">${i + 1}</Data></Cell><Cell><Data ss:Type="String">${r.name}</Data></Cell><Cell><Data ss:Type="String">${r.team}</Data></Cell><Cell><Data ss:Type="String">${r.time}</Data></Cell></Row>\n`;
+    });
+    xml += '</Table></Worksheet>\n';
+    xml += '</Workbook>';
+    
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `TablaDinamica_Protocolo_${new Date().toISOString().split('T')[0]}.xls`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('Tabla dinamica exportada como Excel', 'success');
+}
+
 document.getElementById('dniInput').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') registerAttendance();
 });
